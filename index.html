@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayFlow Fintech Analytics — Capstone, Practice & Interview Prep</title>
+<meta name="description" content="PayFlow fintech capstone hub — merchant performance and fraud & risk analytics on an 18-table payments dataset: data model, KPI catalogue, SQL & QA lab, practice editor, job simulator, dashboards and interview prep.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta http-equiv="Cache-Control" content="no-cache">
+<link rel="stylesheet" href="styles.css?v=20261022-pf">
+<link rel="stylesheet" href="payflow.css?v=20261022-pf">
+<style id="soc-ico-css">.soc-ico{width:17px;height:17px;flex:none;display:inline-block;vertical-align:-3px;margin-right:7px}#side-youtube,#side-medium,#side-linkedin,#social-youtube,#social-medium,#social-linkedin{display:inline-flex;align-items:center}.cmdk-fab-hint{display:none!important}a>.soc-ico{margin-right:5px}a:has(>.soc-ico){display:inline-flex;align-items:center}</style>
+<style id="rv-nav-css">#nav button .nav-ai{margin-left:auto;font-size:9.5px;font-weight:800;letter-spacing:.04em;padding:1px 6px;border-radius:5px;background:#7C3AED;color:#fff}#nav button[data-view="review"] .lbl{line-height:1.25}</style>
+</head>
+<body>
+
+<button class="mobile-toggle" id="mobile-toggle" aria-label="Open menu">☰ <span>Menu</span></button>
+<div class="scrim" id="scrim"></div>
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="#" class="brand-home" id="brand-home" title="Go to Home" aria-label="PayFlow Fintech Analytics: go to Home">
+        <img src="assets/payflow-logo.png" alt="PayFlow" class="brand-logo-img logo-on-light" style="max-width:200px;"><img src="assets/payflow-logo-light.png" alt="" class="brand-logo-img logo-on-dark" style="max-width:200px;">
+      </a>
+      <div class="sidebar-project">
+        <div class="p1">Fintech Merchant &amp; Fraud Risk Analytics Capstone</div>
+        <div class="p2">by Mahendra Singh · Trainer, <a href="https://excelr.in/data_analyst_course_delhi/" target="_blank" rel="noopener">ExcelR</a></div>
+      </div>
+    </div>
+
+    <div class="sidebar-progress">
+      <div class="progress-track"><div class="progress-fill" id="sidebar-progress-fill"></div></div>
+      <div class="progress-caption" id="sidebar-progress-caption">0% project complete</div>
+    </div>
+    <div class="streak-badge" id="streak-badge"></div>
+
+    <nav class="sidebar-nav" id="nav">
+      <div class="nav-group-label">Home</div>
+      <button data-view="overview" class="active"><span class="ic">🏠</span><span class="lbl">Home &amp; Roadmap</span></button>
+      <button data-view="schedule"><span class="ic">📅</span><span class="lbl">Project Schedule &amp; Status</span></button>
+      <button data-view="progress"><span class="ic">📈</span><span class="lbl">My Progress</span></button>
+
+      <div class="nav-group-label">Business Problem</div>
+      <button data-view="problem"><span class="ic">🎯</span><span class="lbl">Problem &amp; Business Questions</span></button>
+      <button data-view="rules"><span class="ic">📋</span><span class="lbl">Rules &amp; Regulations</span></button>
+
+      <div class="nav-group-label">Data</div>
+      <button data-view="dataset"><span class="ic">🗃️</span><span class="lbl">Dataset</span></button>
+      <button data-view="model"><span class="ic">🗂️</span><span class="lbl">Data Model</span></button>
+      <button data-view="datadict"><span class="ic">📖</span><span class="lbl">Data Dictionary</span></button>
+      <button data-view="quality"><span class="ic">🧹</span><span class="lbl">Data Quality</span></button>
+
+      <div class="nav-group-label">Analytics</div>
+      <button data-view="kpis"><span class="ic">📊</span><span class="lbl">KPI Library</span></button>
+      <button data-view="sql"><span class="ic">🗄️</span><span class="lbl">SQL Lab</span></button>
+      <button data-view="editor"><span class="ic">⌨️</span><span class="lbl">SQL Practice Editor</span><span class="nav-live">LIVE</span></button>
+      <button data-view="excel"><span class="ic">🧮</span><span class="lbl">Excel Analysis</span></button>
+      <button data-view="analysis"><span class="ic">💡</span><span class="lbl">Business Analysis</span></button>
+
+      <div class="nav-group-label">Dashboards</div>
+      <button data-view="dashboards"><span class="ic">🖼️</span><span class="lbl">Dashboard Gallery</span></button>
+      <button data-view="review"><span class="ic">🧪</span><span class="lbl">Mahendra Dashboard Evaluation Feedback</span><span class="nav-ai">AI</span></button>
+
+      <div class="nav-group-label">QA</div>
+      <button data-view="qa"><span class="ic">🧪</span><span class="lbl">QA &amp; Reconciliation</span></button>
+
+      <div class="nav-group-label">Practice</div>
+      <button data-view="assignments"><span class="ic">📝</span><span class="lbl">Assignments</span></button>
+      <button data-view="lab"><span class="ic">🧠</span><span class="lbl">Analyst Thinking Lab</span></button>
+
+      <div class="nav-group-label">Job Simulator</div>
+      <button data-view="incident"><span class="ic">🚨</span><span class="lbl">Incident Room</span><span class="nav-live">NEW</span></button>
+      <button data-view="broken"><span class="ic">🧩</span><span class="lbl">Broken Dashboard</span></button>
+      <button data-view="stakeholder"><span class="ic">💬</span><span class="lbl">Stakeholder Simulator</span></button>
+
+      <div class="nav-group-label">Interview</div>
+      <button data-view="interview"><span class="ic">🎤</span><span class="lbl">Interview Questions</span></button>
+      <button data-view="pitch"><span class="ic">⏱️</span><span class="lbl">90-sec Project Pitch</span></button>
+
+      <div class="nav-group-label">Career</div>
+      <button data-view="career"><span class="ic">💼</span><span class="lbl">Resume, LinkedIn &amp; Portfolio</span></button>
+
+      <div class="nav-group-label">Resources</div>
+      <button data-view="glossary"><span class="ic">📚</span><span class="lbl">Glossary</span></button>
+      <button data-view="tips"><span class="ic">✨</span><span class="lbl">Student Tips</span></button>
+      <button data-view="learnmore"><span class="ic">🔗</span><span class="lbl">Learn More</span></button>
+      <a class="nav-ext" href="https://roadmap.sh/data-analyst" target="_blank" rel="noopener"><span class="ic">🗺️</span><span class="lbl">Data Analyst Roadmap ↗</span></a>
+      <a class="nav-ext" href="https://90daysailearning.vercel.app/" target="_blank" rel="noopener"><span class="ic">🤖</span><span class="lbl">AI Learning (90 Days) ↗</span></a>
+    </nav>
+
+    <button class="theme-toggle" id="theme-toggle">
+      <span><span class="icon" id="theme-toggle-icon">🌙</span> <span id="theme-toggle-label">Dark mode</span></span>
+    </button>
+
+    <div class="sidebar-footer">
+      <a href="https://www.youtube.com/channel/UC2q-vZWSlQpiGiMcSLUqnIg" id="side-youtube" target="_blank" rel="noopener"><svg class="soc-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="4.5" width="22" height="15" rx="4.5" fill="#FF0000"/><path d="M10 8.6v6.8l5.8-3.4z" fill="#fff"/></svg>YouTube</a>
+      <a href="https://medium.com/@mahendraa1188" id="side-medium" target="_blank" rel="noopener"><svg class="soc-ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="5" fill="#111"/><ellipse cx="8" cy="12" rx="4.2" ry="4.4" fill="#fff"/><ellipse cx="15.2" cy="12" rx="2" ry="4.1" fill="#fff"/><ellipse cx="19.3" cy="12" rx=".8" ry="3.7" fill="#fff"/></svg>Medium</a>
+      <a href="https://www.linkedin.com/in/mahendra-singh-%F0%9F%87%AE%F0%9F%87%B3%F0%9F%9A%80%E2%9D%84%EF%B8%8F-%F0%9F%90%8D-%F0%9F%A6%84-83699485/" id="side-linkedin" target="_blank" rel="noopener"><svg class="soc-ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="5" fill="#0A66C2"/><path d="M6.2 9.6h2.6V18H6.2zM7.5 5.6a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM10.5 9.6H13v1.2c.4-.7 1.3-1.4 2.7-1.4 2.8 0 3.3 1.8 3.3 4.2V18h-2.6v-3.9c0-.9 0-2.1-1.3-2.1s-1.5 1-1.5 2V18h-2.6z" fill="#fff"/></svg>LinkedIn</a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+<div class="ds-announce"><span class="ds-new">NEW</span> Your batch's presentation schedule and group status are live. <button data-goto="schedule">View project schedule →</button></div>
+
+<!-- ===================== HOME ===================== -->
+<section class="view active" id="view-overview">
+  <div class="wrap">
+    <div id="continue-banner" class="continue-banner" style="display:none;"></div>
+    <div class="hero">
+      <div class="hero-pattern" aria-hidden="true"></div>
+      <div class="ds-hero">
+        <div class="ds-float ds-f1" id="hero-problem-card"></div>
+        <div class="ds-float ds-f2" id="hero-streak-card"></div>
+        <div class="ds-float ds-f3" id="hero-top-card"></div>
+        <div class="ds-float ds-f4" id="hero-today-card"></div>
+        <div class="ds-center">
+          <div class="ds-pill"><i></i> Live capstone · Excel → Tableau → Power BI → Final presentation</div>
+          <h1 class="ds-h1">Everything a <span>Data Analyst</span> needs. In one fintech project.</h1>
+          <p class="ds-lead">A payment processor's year in data — 306,141 payment attempts across 820 merchants and 8 currencies, with risk scores, refunds, disputes, fraud investigations and payouts: 18 tables, two dashboards (Merchant 360° and Fraud &amp; Risk), built in Excel, MySQL, Tableau and Power BI, checked in QA and presented to your trainer every week.</p>
+          <div class="ds-cta">
+            <button class="btn-dark ds-start" data-goto="journey-anchor">Start Learning Journey <span aria-hidden="true">→</span></button>
+            <button class="ds-link" data-scroll="how-anchor"><span class="ds-play">▶</span> See how it works</button>
+          </div>
+          <div class="ds-cta2">
+            <a class="btn-yellow" href="https://www.crackanalytics.com/" target="_blank" rel="noopener">Interview Preparation ↗</a>
+            <a class="btn-sky" href="https://www.certiva.co.in/" target="_blank" rel="noopener">Certification Dumps ↗</a>
+            <a class="btn-ai" href="https://90daysailearning.vercel.app/" target="_blank" rel="noopener">🤖 AI Learning ↗</a>
+          </div>
+          <div class="ds-stats"><span><b>306,141</b> payment attempts</span><span><b>820</b> merchants</span><span><b>18</b> tables</span><span><b>47</b> KPIs</span><span class="ds-live"><i></i> Weekly group reviews</span></div>
+        </div>
+      </div>
+      <div class="ds-mentor card">
+        <img src="assets/mahendra-photo.jpg" alt="Mahendra Singh" class="social-avatar">
+        <div class="ds-mentor-t"><strong>Learn with Mahendra Singh</strong><span>Data Analyst Trainer · <a href="https://excelr.in/data_analyst_course_delhi/" target="_blank" rel="noopener">ExcelR</a></span></div>
+        <div class="social-links">
+          <a href="https://www.youtube.com/channel/UC2q-vZWSlQpiGiMcSLUqnIg" id="social-youtube" target="_blank" rel="noopener"><img class="sl-badge-img" src="assets/youtube-icon.png" alt="">YouTube</a>
+          <a href="https://medium.com/@mahendraa1188" id="social-medium" target="_blank" rel="noopener"><img class="sl-badge-img" src="assets/medium-icon.png" alt="">Medium</a>
+          <a href="https://www.linkedin.com/in/mahendra-singh-%F0%9F%87%AE%F0%9F%87%B3%F0%9F%9A%80%E2%9D%84%EF%B8%8F-%F0%9F%90%8D-%F0%9F%A6%84-83699485/" id="social-linkedin" target="_blank" rel="noopener"><i class="sl-badge sl-li">in</i>LinkedIn</a>
+        </div>
+      </div>
+      <div class="callout-yellow">
+        <strong>How to use this site:</strong> Follow the <strong>Learning Journey</strong> below, one step at a time. Each step has a <em>Start →</em> button that opens the right page, and you can tick it off when you're done. Your progress is saved on this device. Know the KPI Library and Data Model cold first (that's where most students fumble in QA, especially attempts vs intents, currency conversion and counting fraud once per payment), then practise with the Assignments, the SQL Practice Editor and the Job Simulator. For a much deeper question bank across SQL, Power BI, Tableau and Excel, <a href="https://www.crackanalytics.com/" target="_blank" rel="noopener">CrackAnalytics</a> has a dedicated question bank for interview prep.
+      </div>
+      <div class="disclaimer-box">
+        <strong>🎓 Educational project.</strong> PayFlow is a fictional payment processor and this dataset was generated for training. It is not data from Stripe, PayPal, Razorpay or any real company, and the risk score is a demonstration score, not a fraud model. <strong>Never upload real card numbers, bank details or customer data into this project or any public portfolio.</strong>
+      </div>
+      <div class="section-head mt-40" style="margin-bottom:14px;">
+        <div class="eyebrow">Where should I start?</div>
+        <h2>Pick your starting point</h2>
+      </div>
+      <div class="start-grid">
+        <div class="start-card lvl-1"><div class="lvl">🟢 Beginner</div><h4>New to data projects</h4><p>Follow the 10-step guided journey from the business problem to the final presentation. Start with the P1 KPIs only.</p><button class="btn-blue" data-goto="journey-anchor">Start Guided Project →</button></div>
+        <div class="start-card lvl-2"><div class="lvl">🟡 Intermediate</div><h4>Know SQL / Power BI basics</h4><p>Jump to the data model and KPI library, then prove yourself in the Assignments with auto-checked answers.</p><button class="btn-blue" data-goto="model">Start Analytics →</button></div>
+        <div class="start-card lvl-3"><div class="lvl">🔵 Interview Ready</div><h4>Project done, interview coming</h4><p>Drill the project questions, avoid the common traps, practise the 90-second pitch and copy your resume block.</p><button class="btn-blue" data-goto="interview">Start Interview Prep →</button></div>
+      </div>
+      <div class="stat-strip" id="stat-strip"></div>
+      <div class="section-head mt-40" id="how-anchor" style="margin-bottom:14px;"><div class="eyebrow">How it works</div><h2>Practise like it's a daily habit</h2></div>
+      <div class="how-grid">
+        <div class="how-step"><span>1</span><h4>Pick today's 3 problems</h4><p>Easy, Medium and Advanced, picked fresh every day from the PayFlow dataset.</p></div>
+        <div class="how-step"><span>2</span><h4>Write real SQL</h4><p>The editor runs SQLite in your browser on summary tables of the PayFlow data. No install.</p></div>
+        <div class="how-step"><span>3</span><h4>Check your answer</h4><p>Your result is compared with the expected one: rows, columns and values.</p></div>
+        <div class="how-step"><span>4</span><h4>Keep the streak 🔥</h4><p>Solve a little every day; your streak and progress are saved on this device.</p></div>
+      </div>
+      <div class="card progress-mini mt-16" id="home-progress"></div>
+    </div>
+
+    <div class="pulse-rule mt-40">
+      <svg viewBox="0 0 1200 28" preserveAspectRatio="none"><path d="M0,14 L380,14 L410,4 L430,24 L450,14 L1200,14"/></svg>
+    </div>
+
+    <div class="section-head mt-40" id="journey-anchor">
+      <div class="eyebrow">🚀 Your Learning Journey</div>
+      <h2>Ten steps, in this order: don't skip ahead</h2>
+      <p>Each step builds on the previous one. Click <strong>Start →</strong> to open the page for that step, then mark it done.</p>
+    </div>
+    <div class="roadmap-cta card">
+      <div><h4>🗺️ New to data analytics? See the full Data Analyst Roadmap</h4><p>This project covers one part of the journey. The roadmap shows every skill a data analyst needs, from Excel and SQL to statistics and visualization, in the order to learn them.</p></div>
+      <a class="btn-sky" href="https://roadmap.sh/data-analyst" target="_blank" rel="noopener">Open Data Analyst Roadmap ↗</a>
+    </div>
+    <div class="journey" id="journey"></div>
+
+    <div class="section-head mt-40">
+      <div class="eyebrow">🎯 Project Deliverables</div>
+      <h2>What you should have in hand when the project is complete</h2>
+      <p>Tick each deliverable as you finish it. This is also exactly what to show in a portfolio or an interview walkthrough.</p>
+    </div>
+    <div class="deliv-grid" id="deliv-grid"></div>
+
+    <div class="section-head mt-40">
+      <div class="eyebrow">Before vs After</div>
+      <h2>What changes when payments reporting moves from exports to analytics</h2>
+      <p>Use this exact contrast when an interviewer asks "what was the value of your project?"</p>
+    </div>
+    <div class="ba-grid" id="before-after"></div>
+
+    <div class="section-head mt-40">
+      <div class="eyebrow">Tools used in this capstone</div>
+      <h2>One payments dataset, four tools, one story</h2>
+      <p>Each tool plays a distinct role in the pipeline. Interviewers frequently probe why a given stage used the tool it did.</p>
+    </div>
+    <div class="tool-grid" id="tool-grid"></div>
+    <div class="callout mt-16">
+      <h4>How the same dataset moves through all four tools</h4>
+      <p><strong>Excel:</strong> profile the CSVs, convert amounts with dim_fx_rate and build the first KPIs with pivots; the starter workbook (below) does it on a merchant-month summary already in USD.<br>
+      <strong>Tableau &amp; Power BI:</strong> don't connect to the CSV files. Load all 18 tables into MySQL, then connect <em>to SQL</em>: <code>vw_payment</code>, <code>vw_confirmed_fraud</code>, <code>vw_refund_usd</code> and the merchant-month mart.<br>
+      <strong>QA:</strong> run SQL directly against the database, then match TPV, revenue, success rate, active merchants, fraud, chargebacks and payouts against both dashboards.</p>
+    </div>
+
+    <div class="section-head mt-40">
+      <div class="eyebrow">Data Pipeline</div>
+      <h2>Payment systems → ETL → warehouse → Tableau / Power BI</h2>
+      <p>The full path data actually travels: the payment gateway, risk engine, case-management tool and payout ledger write to their own databases; ETL loads and converts them into the analytics warehouse, and both BI tools connect only to the warehouse.</p>
+    </div>
+    <div class="pipeline-card-dark">
+      <svg class="pipeline-svg" viewBox="0 0 1080 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Animated data pipeline: gateway, risk and payout systems land in a source database, ETL extracts it into a data warehouse, and Tableau, Power BI, and an AI/insights layer all connect to that warehouse">
+        <defs>
+          <marker id="arrow2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#4A535E"/></marker>
+          <filter id="dotglow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="2.4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <path id="p1" d="M170,145 H225" /><path id="p2" d="M365,145 H420" /><path id="p3" d="M580,145 H635" />
+          <path id="p4" d="M815,145 C845,145 845,55 870,55" /><path id="pAI" d="M815,145 C845,145 845,150 870,150" /><path id="p5" d="M815,145 C845,145 845,245 870,245" />
+        </defs>
+        <use href="#p1" stroke="#3A424B" stroke-width="2" fill="none" marker-end="url(#arrow2)"/>
+        <use href="#p2" stroke="#3A424B" stroke-width="2" fill="none" marker-end="url(#arrow2)"/>
+        <use href="#p3" stroke="#3A424B" stroke-width="2" fill="none" marker-end="url(#arrow2)"/>
+        <use href="#p4" stroke="#3A424B" stroke-width="2" fill="none" marker-end="url(#arrow2)"/>
+        <use href="#pAI" stroke="#3A424B" stroke-width="2" fill="none" marker-end="url(#arrow2)"/>
+        <use href="#p5" stroke="#3A424B" stroke-width="2" fill="none" marker-end="url(#arrow2)"/>
+        <circle r="4" fill="#5ED3F7" filter="url(#dotglow)"><animateMotion dur="1.8s" repeatCount="indefinite" begin="0s"><mpath href="#p1"/></animateMotion></circle>
+        <circle r="4" fill="#5ED3F7" filter="url(#dotglow)"><animateMotion dur="1.8s" repeatCount="indefinite" begin="0.9s"><mpath href="#p1"/></animateMotion></circle>
+        <circle r="4" fill="#5ED3F7" filter="url(#dotglow)"><animateMotion dur="1.6s" repeatCount="indefinite" begin="0.35s"><mpath href="#p2"/></animateMotion></circle>
+        <circle r="4" fill="#5ED3F7" filter="url(#dotglow)"><animateMotion dur="1.6s" repeatCount="indefinite" begin="1.15s"><mpath href="#p2"/></animateMotion></circle>
+        <circle r="4" fill="#2BA6F0" filter="url(#dotglow)"><animateMotion dur="1.6s" repeatCount="indefinite" begin="0.7s"><mpath href="#p3"/></animateMotion></circle>
+        <circle r="4" fill="#2BA6F0" filter="url(#dotglow)"><animateMotion dur="1.6s" repeatCount="indefinite" begin="1.5s"><mpath href="#p3"/></animateMotion></circle>
+        <circle r="4" fill="#38BDF8" filter="url(#dotglow)"><animateMotion dur="2s" repeatCount="indefinite" begin="1.05s"><mpath href="#p4"/></animateMotion></circle>
+        <circle r="4" fill="#A78BFA" filter="url(#dotglow)"><animateMotion dur="2s" repeatCount="indefinite" begin="1.2s"><mpath href="#pAI"/></animateMotion></circle>
+        <circle r="4" fill="#F6C445" filter="url(#dotglow)"><animateMotion dur="2s" repeatCount="indefinite" begin="1.05s"><mpath href="#p5"/></animateMotion></circle>
+        <g>
+          <rect x="20" y="110" width="150" height="70" rx="10" fill="#1B2027" stroke="#333B44" stroke-width="1.5"/>
+          <text x="95" y="136" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="#FFFFFF">Gateway · Risk</text>
+          <text x="95" y="151" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="#FFFFFF">&amp; Payouts</text>
+          <text x="95" y="168" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="#6D7680">attempts · cases · payouts</text>
+        </g>
+        <g>
+          <rect x="225" y="110" width="140" height="70" rx="10" fill="#1B2027" stroke="#333B44" stroke-width="1.5"/>
+          <ellipse cx="295" cy="132" rx="18" ry="6" fill="none" stroke="#B7C0C6" stroke-width="1.8"/>
+          <path d="M277 132 V150 A18 6 0 0 0 313 150 V132" fill="none" stroke="#B7C0C6" stroke-width="1.8"/>
+          <text x="295" y="167" text-anchor="middle" font-family="var(--mono)" font-size="10.5" font-weight="700" fill="#FFFFFF">Source DB</text>
+        </g>
+        <g>
+          <rect x="420" y="90" width="160" height="110" rx="10" fill="#15253A" stroke="#2BA6F0" stroke-width="1.75"/>
+          <text x="500" y="118" text-anchor="middle" font-family="var(--mono)" font-size="12.5" font-weight="700" fill="#5ED3F7">ETL</text>
+          <text x="500" y="141" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="#DDE4E2">Extract</text>
+          <text x="500" y="158" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="#DDE4E2">Transform</text>
+          <text x="500" y="175" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="#DDE4E2">Load</text>
+        </g>
+        <g>
+          <rect x="635" y="75" width="180" height="140" rx="10" fill="#1B222E" stroke="#1677D2" stroke-width="1.75"/>
+          <ellipse cx="725" cy="113" rx="34" ry="11" fill="none" stroke="#5ED3F7" stroke-width="2"/>
+          <path d="M691 113 V150 A34 11 0 0 0 759 150 V113" fill="none" stroke="#5ED3F7" stroke-width="2"/>
+          <path d="M691 131 A34 11 0 0 0 759 131" fill="none" stroke="#5ED3F7" stroke-width="1.4" opacity="0.5"/>
+          <text x="725" y="175" text-anchor="middle" font-family="var(--mono)" font-size="11.5" font-weight="700" fill="#FFFFFF">Payments DWH</text>
+          <text x="725" y="192" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#8FA6C4">vw_payment · USD</text>
+        </g>
+        <g>
+          <rect x="870" y="15" width="170" height="80" rx="10" fill="#132430" stroke="#38BDF8" stroke-width="1.75"/>
+          <image href="assets/tableau-icon.png" x="939" y="24" width="32" height="32"/>
+          <text x="955" y="73" text-anchor="middle" font-family="var(--mono)" font-size="11.5" font-weight="700" fill="#FFFFFF">Tableau</text>
+        </g>
+        <g>
+          <rect x="870" y="110" width="170" height="80" rx="10" fill="#221A2E" stroke="#A78BFA" stroke-width="1.75"/>
+          <line x1="955" y1="123" x2="955" y2="129" stroke="#A78BFA" stroke-width="2"/><circle cx="955" cy="120" r="3" fill="#A78BFA"/>
+          <rect x="936" y="129" width="38" height="30" rx="8" fill="none" stroke="#A78BFA" stroke-width="2"/>
+          <circle cx="946" cy="144" r="3.2" fill="#A78BFA"/><circle cx="964" cy="144" r="3.2" fill="#A78BFA"/>
+          <rect x="945" y="151" width="20" height="3" rx="1.5" fill="#A78BFA"/>
+          <line x1="931" y1="137" x2="936" y2="137" stroke="#A78BFA" stroke-width="2"/><line x1="974" y1="137" x2="979" y2="137" stroke="#A78BFA" stroke-width="2"/>
+          <text x="955" y="178" text-anchor="middle" font-family="var(--mono)" font-size="11.5" font-weight="700" fill="#FFFFFF">AI / Insights</text>
+        </g>
+        <g>
+          <rect x="870" y="205" width="170" height="80" rx="10" fill="#241F14" stroke="var(--yellow)" stroke-width="1.75"/>
+          <rect x="939" y="228" width="9" height="24" fill="#F6C445"/><rect x="951" y="219" width="9" height="33" fill="#F6C445"/><rect x="963" y="235" width="9" height="17" fill="#F6C445"/>
+          <text x="955" y="273" text-anchor="middle" font-family="var(--mono)" font-size="11.5" font-weight="700" fill="#FFFFFF">Power BI</text>
+        </g>
+      </svg>
+      <p class="pipeline-caption-dark">Live-flowing reference, not a literal animation of your data. But this is the real path: nothing reaches Tableau, Power BI, or the AI/insights layer except through the warehouse, and nothing reaches the warehouse except through ETL.</p>
+      <div class="pipeline-legend">
+        <span><i style="background:#5ED3F7"></i>Extract → ETL</span>
+        <span><i style="background:#2BA6F0"></i>Load → Warehouse</span>
+        <span><i style="background:#38BDF8"></i>Connect → Tableau</span>
+        <span><i style="background:#F6C445"></i>Connect → Power BI</span>
+        <span><i style="background:#A78BFA"></i>Connect → AI / Insights</span>
+      </div>
+    </div>
+
+    <div class="section-head mt-40">
+      <div class="eyebrow">Domain primer</div>
+      <h2>What is payments analytics, and why build BI on top of it?</h2>
+    </div>
+    <div class="two-col">
+      <div class="card" style="padding:24px;">
+        <h4 style="font-size:15px;margin-bottom:10px;">What it means</h4>
+        <p id="domain-what" style="font-size:13.8px;color:var(--ink-muted);"></p>
+      </div>
+      <div class="card" style="padding:24px;">
+        <h4 style="font-size:15px;margin-bottom:10px;">Where it's used</h4>
+        <div id="domain-where" style="font-size:13.8px;color:var(--ink-muted);"></div>
+      </div>
+    </div>
+    <div class="card mt-16" style="padding:24px;">
+      <h4 style="font-size:15px;margin-bottom:10px;">What kind of data a payment processor actually generates</h4>
+      <div class="tag-cloud" id="domain-data"></div>
+      <p style="font-size:13.8px;color:var(--ink-muted);margin-top:14px;">This capstone's 18 tables are an analytics-ready shape of exactly this kind of payments data.</p>
+    </div>
+
+    <div class="section-head mt-40">
+      <div class="eyebrow">Project Documents</div>
+      <h2>Download the source documents</h2>
+      <p>A ready-to-use Excel starter with live formulas for the main Merchant 360° KPIs on a merchant-month summary (already in USD). The full dataset (18 CSVs, data dictionary, test cases and data-quality files) is shared separately by your trainer.</p>
+    </div>
+    <div class="doc-grid" id="doc-grid"></div>
+
+    <div class="section-head mt-40">
+      <div class="eyebrow">Get Set Up</div>
+      <h2>Install the tools, then load the data</h2>
+      <p>Before you touch a dashboard: get Tableau and Power BI installed, and get all 18 tables loaded into MySQL so both tools have a real source to connect to.</p>
+    </div>
+    <div class="card illustration-card mt-16" style="padding:0;overflow:hidden;"><img src="assets/setup-infographic.jpg" alt="Install the tools, then load the data: download, install, load MySQL, verify, connect BI" style="width:100%;height:auto;display:block;"></div>
+    <div style="display:none;">
+    </div>
+    <div class="setup-steps" id="setup-steps"></div>
+    <div class="doc-grid mt-16" id="software-grid"></div>
+
+    <div class="section-head mt-40">
+      <div class="eyebrow">Workflow</div>
+      <h2>Five stages, one dataset</h2>
+      <p>The build order matters. Each stage is graded on what the previous one produced.</p>
+    </div>
+    <div class="flow card" id="flow-grid" style="padding:8px;"></div>
+
+    <div class="section-head mt-40">
+      <div class="eyebrow">Timeline</div>
+      <h2>Project schedule</h2>
+    </div>
+    <div class="card timeline" id="timeline" style="padding:6px 20px;"></div>
+  </div>
+</section>
+
+<!-- ===================== PROJECT SCHEDULE ===================== -->
+<section class="view" id="view-schedule">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">📅 Project schedule &amp; status</div>
+      <h2>Weekly presentations, group by group</h2>
+      <p>Kick-off, then one presentation every week: Excel dashboard → Tableau dashboard → Power BI dashboard → Final presentation. SQL QA is presented in the Tableau week or the Power BI week. Only the trainer can change this page.</p>
+      <div class="sch-mode" id="sch-mode"></div>
+    </div>
+    <div id="sch-root"></div>
+  </div>
+</section>
+
+<!-- ===================== MY PROGRESS ===================== -->
+<section class="view" id="view-review">
+  <div class="wrap"><div id="rv-root"></div></div>
+</section>
+
+<section class="view" id="view-progress">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Your Progress</div>
+      <h2>How far along is your project?</h2>
+      <p>Calculated from the journey steps, deliverables, assignments, interview questions and pitch practice you've completed on this device.</p>
+    </div>
+    <div class="two-col">
+      <div class="card" style="padding:24px;">
+        <div class="progress-mini" style="padding:0;" id="progress-overall"></div>
+        <div class="track-list mt-16" id="track-list"></div>
+      </div>
+      <div class="card" style="padding:24px;">
+        <h4 style="font-size:15px;margin-bottom:10px;">Checklist: what's still open</h4>
+        <div id="progress-todo" style="font-size:13.5px;color:var(--ink-muted);"></div>
+        <div class="cert-box" id="cert-box"></div>
+        <div style="margin-top:18px;"><button class="reset-link" id="reset-progress">Reset all my progress on this device</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PROBLEM & BUSINESS QUESTIONS ===================== -->
+<section class="view" id="view-problem">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Business Problem</div>
+      <h2>Problem Statement</h2>
+      <p>PayFlow is a payment processor serving 820 merchants in India, the US, UK, UAE, Singapore, Australia and Canada. Management wants two things: a <strong>Merchant 360°</strong> view of who drives, grows and threatens the business, and a <strong>Fraud &amp; Risk</strong> view that separates confirmed fraud from suspicion, refunds, disputes and chargebacks. <em>"Every team gives me a different TPV, and nobody can tell me how much fraud we actually lost." — CFO, PayFlow.</em></p>
+    </div>
+    <div class="card mb-16" style="padding:0;overflow:hidden;margin-bottom:16px;"><img src="assets/payflow-dashboard-sample.jpg" alt="PayFlow target dashboards: Merchant 360° and Fraud &amp; Risk" class="zoomable" style="width:100%;height:auto;display:block;cursor:zoom-in;"></div>
+    <div class="rule-grid" id="problem-grid"></div>
+
+    <div class="section-head mt-40">
+      <div class="eyebrow">💼 Questions a Business Manager Would Ask</div>
+      <h2>Start from the business question, not from the chart</h2>
+      <p>Every analysis on this project follows the same chain. Open a question to see how a data analyst actually works it end to end, with the real numbers from this dataset.</p>
+    </div>
+    <div class="chain-legend"><span class="k">Question</span>→<span class="k">Data</span>→<span class="k">KPI</span>→<span class="k">Analysis</span>→<span class="k">Insight</span>→<span class="k">Recommendation</span></div>
+    <div id="bq-list"></div>
+
+    <div class="section-head mt-40">
+      <div class="eyebrow">Requirements</div>
+      <h2>What the stakeholders asked for (BRD summary)</h2>
+      <p>The requirement each dashboard page must answer. Reviewers grade you against this list.</p>
+    </div>
+    <div class="card table-scroll"><table class="dtable" id="req-table"></table></div>
+
+    <div class="section-head mt-40">
+      <div class="eyebrow">Before vs After</div>
+      <h2>The change this project delivers</h2>
+    </div>
+    <div class="ba-grid" id="before-after-2"></div>
+  </div>
+</section>
+
+<!-- ===================== RULES & REGULATIONS ===================== -->
+<section class="view" id="view-rules">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Project Rules &amp; Regulations</div>
+      <h2>Participation guidelines for this capstone</h2>
+      <p>Same rules that apply to your project group. Read them once so nothing here surprises you mid-course.</p>
+    </div>
+    <div class="rule-grid" id="rule-grid"></div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">Team Focus Areas</div>
+      <h2>What "good participation" looks like week to week</h2>
+    </div>
+    <div class="tip-grid" id="focus-grid"></div>
+    <div class="callout mt-40">
+      <h4>Why this tab exists in an interview-prep hub</h4>
+      <p>"How do you handle a teammate who isn't contributing?" and "tell me about a conflict on a project team" are standard behavioral questions. This policy is the real situation you can draw the honest answer from.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== DATASET ===================== -->
+<section class="view" id="view-dataset">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Dataset</div>
+      <h2>18 tables: merchants, payments, risk, refunds, disputes, fraud cases and payouts</h2>
+      <p>The full dataset (18 CSVs, PayFlow_Data_Dictionary.xlsx, 17 test cases and the data-quality exercise files) is shared separately by your trainer. This page tells you what's inside before you open it.</p>
+    </div>
+    <div class="disclaimer-box" style="margin-bottom:16px;"><strong>🎓 Training data that behaves like the real thing.</strong> Stripe-style IDs, real merchant-style names, daily FX rates near 2025 market levels, hour / weekday / salary-day / festive seasonality, retries inside payment intents, real decline codes, partial and multiple refunds, network dispute reason codes, multi-source fraud investigations and a payout ledger that reconciles to the cent. Every foreign key in the clean tables is valid (checked on the QA page); the deliberate defects live only in the separate Data-Quality exercise files.</div>
+    <div class="callout">
+      <h4>Coverage and grain: read this before you calculate anything</h4>
+      <p id="coverage-text"></p>
+    </div>
+    <div class="ds-grid mt-16" id="ds-grid"></div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">Hidden business story</div>
+      <h2>What the payments data is really saying</h2>
+      <p>Ten patterns sit in this data. Finding and explaining them is your job.</p>
+    </div>
+    <div class="card table-scroll"><table class="dtable" id="story-table"></table></div>
+  </div>
+</section>
+
+<!-- ===================== DATA MODEL ===================== -->
+<section class="view" id="view-model">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Data Model</div>
+      <h2>18 tables, one hub: fact_payment in the middle</h2>
+      <p>fact_payment (one row per attempt) sits in the centre with its dimensions: merchant, customer, payment method, status, date and the FX rate on (date, currency). Refunds, disputes, fraud cases and risk scores hang off payment_id — all one-to-many except the risk score — and settlements hang off merchant, with their ledger lines below. The rule that keeps every number right: <strong>aggregate each child fact to the grain you need before you join it</strong>.</p>
+    </div>
+    <div class="card mt-16" style="padding:0;overflow:hidden;"><img src="assets/payflow-data-model.jpg" alt="PayFlow data model and entity-relationship diagram" class="zoomable" id="model-img" style="width:100%;height:auto;display:block;cursor:zoom-in;"></div>
+    <p style="font-size:12px;color:var(--ink-muted);margin-top:8px;">Click the diagram to enlarge it.</p>
+    <div class="section-head mt-40"><div class="eyebrow">Animated</div><h2>How each table joins to the next</h2><p>The animation walks through every relationship, one key at a time: merchant_id, payment_method_id, transaction_status_id, customer_id, date + currency, payment_id and settlement_id. Click to enlarge.</p></div>
+    <div class="card" style="padding:0;overflow:hidden;"><img src="assets/data-model-joins.gif" alt="Animated data model: each relationship lights up in turn with its join key" class="zoomable" style="width:100%;height:auto;display:block;cursor:zoom-in;"></div>
+    <div class="section-head mt-40"><div class="eyebrow">Reference schema</div><h2>The interactive version</h2></div>
+    <div class="model-grid">
+      <div class="card"><div class="schema" id="schema-grid"></div></div>
+      <div class="card rel-list" id="rel-list"></div>
+    </div>
+
+    <div class="card mt-40" style="padding:22px;">
+      <h4 style="font-size:15px;margin-bottom:10px;">Global filters (slicers that apply across every page)</h4>
+      <div id="global-filters" style="font-size:13.5px;color:var(--ink-muted);"></div>
+    </div>
+    <div class="two-col mt-40">
+      <div class="card" style="padding:22px;">
+        <h4 style="font-size:15px;margin-bottom:10px;">Load order (Power BI / Tableau)</h4>
+        <div id="load-order" style="font-size:13.5px;color:var(--ink-muted);"></div>
+      </div>
+      <div class="card" style="padding:22px;">
+        <h4 style="font-size:15px;margin-bottom:10px;">Calculated fields to add in the SQL database / BI tool</h4>
+        <div id="calc-fields" style="font-size:13.5px;color:var(--ink-muted);"></div>
+      </div>
+    </div>
+    <div class="card mt-40" style="padding:22px;">
+      <h4 style="font-size:15px;margin-bottom:10px;">⚠️ Gotchas &amp; Interview Traps</h4>
+      <p style="font-size:13px;color:var(--ink-muted);margin-bottom:14px;">The specific traps interviewers ask about most in this model. Know these cold.</p>
+      <div id="gotchas-list" class="gotchas-grid"></div>
+    </div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">Watch out for this</div>
+      <h2>Common QA mistakes on this project's KPIs</h2>
+    </div>
+    <div class="qa-mistakes card" style="padding:20px 22px;">
+      <h4 style="font-size:15px;margin-bottom:8px;">Before you sign off on any KPI card or chart, check for these</h4>
+      <ul style="font-size:13.5px;color:var(--ink-muted);padding-left:18px;margin:0;">
+        <li><strong>Every amount in USD</strong> via dim_fx_rate on (transaction_date_key, currency_code) — never SUM(transaction_amount).</li>
+        <li><strong>Attempts ≠ intents</strong>: label every count; success rate excludes Pending.</li>
+        <li><strong>Active merchant = ≥1 successful payment</strong>, not the status column.</li>
+        <li><strong>Confirmed fraud once per payment</strong> (vw_confirmed_fraud), suspected risk on its own card.</li>
+        <li><strong>Chargeback = lost / accepted disputes only</strong>; refunds, disputes and fraud never added together.</li>
+        <li><strong>Aggregate refunds, cases and lines first</strong>, then join — check row counts before and after.</li>
+        <li>Reconcile every KPI against the equivalent SQL query before presenting.</li>
+      </ul>
+    </div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">Join Guide</div>
+      <h2>Every relationship you need, in one place</h2>
+      <p>Every table with its key and grain, then the join paths for each analysis. Each fact relates to dim_date on its own date key.</p>
+    </div>
+    <div class="card table-scroll join-table-wrap"><table class="dtable" id="join-guide-table"></table></div>
+    <div class="card table-scroll join-table-wrap mt-16"><table class="dtable" id="join-paths-table"></table></div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">Dashboard Spec</div>
+      <h2>Two dashboards, four pages, four audiences</h2>
+      <p>Who reads this, and what decision does it drive? A favourite interview probe.</p>
+    </div>
+    <div class="card table-scroll"><table class="dtable" id="dash-table"></table></div>
+  </div>
+</section>
+
+<!-- ===================== DATA DICTIONARY ===================== -->
+<section class="view" id="view-datadict">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Data Dictionary</div>
+      <h2>Every column, table by table</h2>
+      <p>Every column in the 18 tables, with type, key, nullability, business definition, a real example value and its validation rule.</p>
+    </div>
+    <div class="filter-bar">
+      <input class="search-input" id="dd-search" type="text" placeholder="Search columns — e.g. &quot;intent&quot;, &quot;chargeback&quot;, &quot;usd&quot;…">
+    </div>
+    <div class="filter-bar" id="dd-pills"></div>
+    <div id="datadict-tables"></div>
+  </div>
+</section>
+
+<!-- ===================== DATA QUALITY ===================== -->
+<section class="view" id="view-quality">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Data Quality</div>
+      <h2>Expected blanks, quirks and the checks to run before modelling</h2>
+      <p>Real payments data is never perfectly clean. Know which "issues" are by design (NULLs with a meaning, outages, late rows) and which are genuine defects — those are in the Data-Quality exercise files.</p>
+    </div>
+    <div class="card" style="padding:22px;">
+      <h4 style="font-size:15px;margin-bottom:10px;">Expected nulls &amp; quirks (not errors)</h4>
+      <div id="null-notes" style="font-size:13.5px;color:var(--ink-muted);"></div>
+    </div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">Data Quality Rules</div>
+      <h2>Your cleaning &amp; validation checklist</h2>
+    </div>
+    <div class="card table-scroll"><table class="dtable" id="dq-table"></table></div>
+  </div>
+</section>
+
+<!-- ===================== KPI LIBRARY ===================== -->
+<section class="view" id="view-kpis">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">KPI Library</div>
+      <h2>All 47 KPIs: the question, the logic, the SQL and the answer key</h2>
+      <p>Filter by dashboard. Each card gives the business question first, then the numerator, denominator, grain and date basis, the formula and the MySQL query, plus the value your dashboard should show (computed with SQL from the dataset) and the most common wrong answer.</p>
+    </div>
+    <div class="kpi-roadmap">
+      <div class="kr-step kr-p1"><div class="kr-t">P1 · Must know</div><div class="kr-n" id="kr-p1"></div><p>The KPIs every page needs: merchant base, volume, TPV, revenue, success rate, confirmed fraud and disputes. Build these first.</p></div>
+      <div class="kr-arrow">→</div>
+      <div class="kr-step kr-p2"><div class="kr-t">P2 · Important</div><div class="kr-n" id="kr-p2"></div><p>Add once P1 reconciles to SQL: intent conversion, average ticket, MoM revenue, declining and high-failure merchants, recovery, resolution time, segment rates.</p></div>
+      <div class="kr-arrow">→</div>
+      <div class="kr-step kr-p3"><div class="kr-t">P3 · Advanced</div><div class="kr-n" id="kr-p3"></div><p>Extensions you design yourself: cohort LTV, payout SLAs, model precision / recall, cost of fraud operations.</p></div>
+    </div>
+    <div class="callout-yellow" style="margin:0 0 16px;"><strong>Don't build all 47 at once.</strong> Master the P1 KPIs first, get them to match the answer key, then move on.</div>
+    <div class="filter-bar" id="kpi-tier-pills"></div>
+    <div class="filter-bar">
+      <input class="search-input" id="kpi-search" type="text" placeholder="Search KPIs — e.g. &quot;TPV&quot;, &quot;fraud&quot;, &quot;retention&quot;…">
+      <button class="pill starred-only-pill" id="kpi-starred-toggle">★ Starred only</button>
+      <button type="button" class="pill" id="print-cheatsheet-btn">🖨️ Print one-page KPI cheat sheet</button>
+    </div>
+    <div class="filter-bar" id="kpi-pills"></div>
+    <div class="kpi-grid" id="kpi-grid"></div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">Interview Trap</div>
+      <h2>Key difference: confirmed fraud vs suspected risk vs declines vs disputes</h2>
+      <p>Five different things that all sound like 'fraud'. Mixing them up is the most common fintech-metrics mistake in interviews.</p>
+    </div>
+    <div class="card table-scroll">
+      <table class="dtable">
+        <thead><tr><th>Measure</th><th>Source &amp; rule</th><th>What it means</th><th>PayFlow value</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Confirmed fraud</strong></td><td>fact_fraud_case, flag = 1, once per payment</td><td>An investigation proved the payment fraudulent — a real loss (before recovery).</td><td>$32,885.49 on 396 payments</td></tr>
+          <tr><td><strong>Suspected risk</strong></td><td>fact_risk_assessment, decision review / block</td><td>The risk engine was suspicious. Mostly legitimate customers.</td><td>5,307 attempts · $205,295</td></tr>
+          <tr><td><strong>Declined / failed</strong></td><td>fact_payment, status Failed</td><td>The issuer or bank said no (funds, limits, errors). Not fraud.</td><td>22,604 attempts</td></tr>
+          <tr><td><strong>Dispute → chargeback</strong></td><td>fact_dispute; chargeback when lost / accepted</td><td>A cardholder claim; money taken back only if the merchant loses.</td><td>1,210 disputes · $39,386 charged back</td></tr>
+          <tr><td><strong>Refund</strong></td><td>fact_refund, succeeded rows</td><td>The merchant returned money voluntarily (returns, cancellations).</td><td>$723,008 · 4.94% of TPV</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="quiz-launch-card" style="margin-top:24px;">
+      <div><h4>🎴 Flashcard Quiz Mode</h4><p>Flip through every KPI, hide the logic, then self-grade "Got it" or "Review again".</p></div>
+      <button id="kpi-quiz-launch-btn">Start Quiz</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== SQL LAB ===================== -->
+<section class="view" id="view-sql">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">SQL Lab</div>
+      <h2>The queries this project is built on (MySQL)</h2>
+      <p>From DDL and loading to views, KPI queries, the merchant master, fraud segmentation and reconciliation. Every query was run on the PayFlow dataset in MySQL-compatible SQL and its real output is shown under it — if yours differs, something in your load or logic is off.</p>
+    </div>
+    <div class="practice-bar"><div><strong>🎯 Practice mode</strong><span>Hide the SQL so you try first: read the task, write your query, use the hint, then reveal the solution and compare results.</span></div><button class="btn-blue" id="sql-practice-toggle">Turn practice mode ON</button></div>
+    <div class="filter-bar" id="sql-pills"></div>
+    <div id="sql-list"></div>
+  </div>
+</section>
+
+<!-- ===================== SQL PRACTICE EDITOR ===================== -->
+<section class="view" id="view-editor">
+  <div class="wrap wide">
+    <div class="section-head">
+      <div class="eyebrow">⌨️ SQL Practice Editor · runs in your browser</div>
+      <h2>Problemset: SQL on the PayFlow data</h2>
+      <p>24 problems (8 Easy · 8 Medium · 8 Advanced) on 8 practice tables built from the full dataset, amounts already in USD: merchants, merchant_monthly, method_monthly, payment_attempts, refunds, disputes, fraud_cases, settlements. The editor uses SQLite syntax; the full MySQL scripts are in the SQL Lab.</p>
+    </div>
+    <div id="ed-browse">
+      <div class="ps-cards">
+        <div class="ps-card ps-teal"><span class="ps-tag">DAILY 3 SET</span><h4>Today's Challenge</h4><p id="ps-today-sub">1 Easy · 1 Medium · 1 Advanced</p><button class="ps-go" id="ps-today-go">Solve today's set →</button></div>
+        <div class="ps-card ps-violet"><span class="ps-tag">PROGRESS</span><h4 id="ps-progress">0 / 24 Solved</h4><p id="ps-streak">0 day streak</p></div>
+        <div class="ps-card ps-amber"><span class="ps-tag">INTERVIEW PREP</span><h4>450+ SQL & BI questions</h4><p><a href="https://www.crackanalytics.com/" target="_blank" rel="noopener">CrackAnalytics ↗</a></p></div>
+      </div>
+      <div class="ps-grid">
+        <div class="ps-main">
+          <div class="ps-topics" id="ps-topics"></div>
+          <div class="ps-filters card">
+            <div class="ps-tables" id="ps-tables"></div>
+            <div class="ps-seg" id="ps-levels"></div>
+          </div>
+          <div class="ps-tools">
+            <input class="search-input" id="ps-search" type="text" placeholder="Search problems by name or number…">
+            <select id="ps-status"><option value="all">Status: All</option><option value="todo">Unsolved</option><option value="done">Solved</option></select>
+            <button class="btn-outline" id="ps-random">⤮ Pick Random</button>
+          </div>
+          <div class="card ps-table-wrap"><table class="ps-table"><thead><tr><th>Status</th><th>Title</th><th>Time</th><th>Difficulty</th><th>Solve</th></tr></thead><tbody id="ps-rows"></tbody></table></div>
+        </div>
+        <aside class="ps-side">
+          <div class="card ps-cal" id="ps-cal"></div>
+          <div class="card ps-tablesinfo"><strong>Practice tables</strong><p>8 practice tables built from the full dataset. Open a problem to see columns.</p><div id="ps-tablelist"></div></div>
+        </aside>
+      </div>
+    </div>
+    <div id="ed-solve" style="display:none;">
+      <div class="ed-solve-bar"><button class="btn-outline" id="ed-back">← Problemset</button><span id="ed-pos"></span><button class="btn-outline" id="ed-prev">‹ Prev</button><button class="btn-outline" id="ed-next">Next ›</button></div>
+      <div class="ed-shell two">
+        <div class="ed-main">
+          <div class="card ed-problem"><h3 id="ed-title"></h3><p id="ed-task"></p><div id="ed-tables" class="ed-tables"></div></div>
+          <div class="ed-editor card">
+            <div class="ed-bar"><span class="ed-dots"><i></i><i></i><i></i></span><span class="ed-file">query.sql</span>
+              <div class="ed-actions"><button class="btn-outline" id="ed-hint">💡 Hint</button><button class="btn-outline" id="ed-solution">🔓 Solution</button><button class="btn-outline" id="ed-reset">↺ Reset</button><button class="btn-blue" id="ed-run">▶ Run</button><button class="btn-ai" id="ed-check">✓ Submit</button></div></div>
+            <textarea id="ed-sql" spellcheck="false" aria-label="SQL editor"></textarea>
+          </div>
+          <div id="ed-msg"></div>
+          <div class="card ed-out" id="ed-out"></div>
+        </div>
+        <aside class="ed-schema card"><strong>Tables</strong><p style="font-size:12px;color:var(--ink-muted);margin:4px 0 8px;">Click a column to insert it.</p><div id="ed-schema"></div></aside>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== EXCEL ANALYSIS ===================== -->
+<section class="view" id="view-excel">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Excel Analysis</div>
+      <h2>Stage 1: prove the numbers in Excel before you touch a database</h2>
+      <p>Excel is where you first meet the data. These are the formulas and pivots you're expected to build, and the starter template already does the first five for you.</p>
+    </div>
+    <div class="doc-grid" id="doc-grid-2"></div>
+    <div class="card table-scroll mt-16"><table class="dtable" id="excel-table"></table></div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">Pivot practice</div>
+      <h2>Five pivots every student should build</h2>
+    </div>
+    <div class="tip-grid" id="pivot-grid"></div>
+  </div>
+</section>
+
+<!-- ===================== BUSINESS ANALYSIS ===================== -->
+<section class="view" id="view-analysis">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Business Analysis</div>
+      <h2>Where does PayFlow earn, grow and leak?</h2>
+      <p>Volume, revenue, conversion and risk by month, industry, method, amount band and hour. Headline: <strong id="vol-base"></strong>.</p>
+    </div>
+    <div class="chart-grid" id="driver-grid"></div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">Key insights &amp; recommendations</div>
+      <h2>The "so what?" leadership actually wants</h2>
+      <p>Not just what the numbers are, but what to do about them.</p>
+    </div>
+    <div class="insights-grid" id="insights-grid"></div>
+  </div>
+</section>
+
+<!-- ===================== DASHBOARD GALLERY ===================== -->
+<section class="view" id="view-dashboards">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">📊 Dashboard Gallery</div>
+      <h2>Two dashboards, four pages: the portfolio you're building</h2>
+      <p>Merchant 360° (overview + merchant master &amp; detail) and Fraud &amp; Risk (overview + investigations, disputes &amp; exceptions). Each card opens the target layout computed directly from the dataset: the KPI values and chart data your Tableau and Power BI builds should reproduce, with build notes for both tools.</p>
+    </div>
+    <div class="gallery-grid" id="gallery-grid"></div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">Sample dashboards &amp; data model</div>
+      <h2>Reference layouts, and what each one does</h2>
+      <p>The target design for this project. The numbers on the images are placeholders: build it with the real PayFlow values from the KPI Library. Click an image to enlarge it.</p>
+    </div>
+    <div class="sample-grid" id="sample-grid"></div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">Which dashboard does what</div>
+      <h2>9 common payments dashboards: click a name to see everything it does</h2>
+      <p>Each card explains the purpose, audience, KPIs, visuals and filters of a real-world payments dashboard, plus how to build it with the PayFlow tables.</p>
+    </div>
+    <div class="dash-acc-tools"><button class="btn-outline" id="acc-open-all">Expand all</button><button class="btn-outline" id="acc-close-all">Collapse all</button></div>
+    <div id="vidi-cards"></div>
+  </div>
+</section>
+
+<!-- ===================== QA ===================== -->
+<section class="view" id="view-qa">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">QA &amp; Reconciliation</div>
+      <h2>Prove that the dashboard and the database say the same thing</h2>
+      <p>QA rounds start here. Run these against your SQL build, then reconcile each output with your Tableau and Power BI numbers before the review meeting.</p>
+    </div>
+    <div id="qa-sql-list"></div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">KPI Reconciliation</div>
+      <h2>The answer key: SQL vs Tableau vs Power BI</h2>
+      <p>Fill the last two columns with your own dashboard values. Anything that doesn't tie out within ±0.1 needs a root cause, not a tweak.</p>
+    </div>
+    <div class="card table-scroll"><table class="dtable" id="recon-table"></table></div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">Referential integrity report</div>
+      <h2>Every key and business rule across all 18 tables, checked</h2>
+      <p>Computed on the full dataset: primary-key uniqueness, every foreign key, FX coverage, one success per intent, fees, refund caps, event order, fraud-flag consistency and settlement reconciliation. Re-run the same checks with the SQL above after you load MySQL.</p>
+    </div>
+    <div class="card table-scroll"><table class="dtable" id="integrity-table"></table></div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">Test cases</div>
+      <h2>17 business test cases with expected results</h2>
+      <p>Real IDs from the dataset. Reproduce each expected result in SQL and in both dashboards before the final presentation.</p>
+    </div>
+    <div class="card table-scroll"><table class="dtable" id="testcase-table"></table></div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">QA sign-off checklist</div>
+      <h2>Before you call the dashboard "done"</h2>
+    </div>
+    <div class="deliv-grid" id="qa-checklist"></div>
+  </div>
+</section>
+
+<!-- ===================== ASSIGNMENTS ===================== -->
+<section class="view" id="view-assignments">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">📝 Hands-on Assignments</div>
+      <h2>Do the work, check your answer, then compare with the solution</h2>
+      <p>Each assignment has three steps: <strong>View Task</strong> → <strong>Check Answer</strong> (type your result; it's validated against the real dataset) → <strong>Solution</strong>. Try before you peek, because the solution unlocks after your first attempt.</p>
+    </div>
+    <div class="lab-score" id="assign-score"></div>
+    <div id="assign-list"></div>
+  </div>
+</section>
+
+<!-- ===================== ANALYST THINKING LAB ===================== -->
+<section class="view" id="view-lab">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">🧠 Analyst Thinking Lab</div>
+      <h2>What would an analyst check first?</h2>
+      <p>Real payments scenarios. Pick the move you'd make first, then read why. There's often more than one reasonable answer, but one is clearly the best first step.</p>
+    </div>
+    <div class="lab-score" id="lab-score"></div>
+    <div id="lab-list"></div>
+  </div>
+</section>
+
+<!-- ===================== JOB SIMULATOR ===================== -->
+<section class="view" id="view-incident">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">🧪 Job Simulator · Incident Room</div>
+      <h2>Something's wrong with a number. Find out why.</h2>
+      <p>Real analyst work starts with a worried message, not a clean question. Each incident uses a trap that really exists in the PayFlow data. Collect evidence, name the root cause, choose the fix and write your reply. Your best score is saved.</p>
+    </div>
+    <div class="js-summary"></div>
+    <div id="inc-root"></div>
+  </div>
+</section>
+
+<section class="view" id="view-broken">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">🧪 Job Simulator · Broken Dashboard</div>
+      <h2>Review a dashboard before leadership sees it</h2>
+      <p>A junior analyst built this dashboard from the PayFlow data. Some numbers are right and some use a formula that misleads. Flag the ones you would not present. Flagging a correct number costs points.</p>
+    </div>
+    <div class="js-summary"></div>
+    <div id="brk-root"></div>
+  </div>
+</section>
+
+<section class="view" id="view-stakeholder">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">🧪 Job Simulator · Stakeholder Simulator</div>
+      <h2>Clarify the request before you build</h2>
+      <p>Stakeholders rarely say exactly what they need. Pick up to 6 clarifying questions. You're scored on whether they pin down the objective, the metric, the period, the scope and the rules, and on avoiding questions that don't matter.</p>
+    </div>
+    <div class="js-summary"></div>
+    <div id="stk-root"></div>
+  </div>
+</section>
+
+<!-- ===================== INTERVIEW ===================== -->
+<section class="view" id="view-interview">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Interview Questions from This Project</div>
+      <h2>Questions this project actually gets asked</h2>
+      <p>Grouped by round: project, payments domain, KPI definitions, SQL, grain &amp; fan-out, Power BI, Tableau, fraud vs risk, refunds &amp; disputes, data quality, scenarios, limits of synthetic data, HR and rapid fire. Tap a question to expand the answer approach, and mark ones you've nailed to track progress.</p>
+    </div>
+    <div class="section-head" style="margin-bottom:12px;"><div class="eyebrow">⚠️ Common Interview Traps</div><h3 style="font-size:20px;">The mistakes interviewers are listening for</h3></div>
+    <div class="trap-grid" id="trap-grid"></div>
+    <div class="quiz-launch-card mt-16">
+      <div>
+        <h4>🎴 Flashcard Quiz Mode</h4>
+        <p>Flip through questions one at a time, hide the answer, then self-grade. A faster way to drill than reading top to bottom.</p>
+      </div>
+      <button id="quiz-launch-btn">Start Quiz</button>
+    </div>
+    <div class="callout-yellow crackanalytics-cta">
+      <div class="ca-text">
+        <strong>Want the full interview-prep library?</strong> This tab covers the project-specific questions. For 450+ real SQL, Power BI, Tableau, Excel and Data Science questions with full answers, organized by difficulty, head to <strong>CrackAnalytics</strong>.
+      </div>
+      <a class="btn-dark" href="https://www.crackanalytics.com/" target="_blank" rel="noopener">Open CrackAnalytics ↗</a>
+    </div>
+    <div class="progress-label"><span>Your progress</span><span id="progress-text">0 / 0 reviewed</span></div>
+    <div class="progress-bar-outer"><div class="progress-bar-inner" id="progress-bar" style="width:0%;"></div></div>
+    <div class="filter-bar">
+      <input class="search-input" id="qa-search" type="text" placeholder="Search interview questions…">
+      <button class="pill starred-only-pill" id="qa-starred-toggle">★ Starred only</button>
+    </div>
+    <div class="tabbar" id="qa-tabs"></div>
+    <div id="qa-list"></div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">References</div>
+      <h2>Where these questions come from</h2>
+      <p>The project questions are written for this dataset. DAX and Tableau behaviour referenced in the answers can be checked in the official documentation below.</p>
+    </div>
+    <div class="learn-grid" id="qa-refs"></div>
+  </div>
+</section>
+
+<!-- ===================== 90-SEC PITCH ===================== -->
+<section class="view" id="view-pitch">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">🎤 Explain This Project in 90 Seconds</div>
+      <h2>The framework: eight beats, about ten seconds each</h2>
+      <p>"Tell me about your project" opens almost every interview. Hit these eight beats in order and you'll sound like someone who shipped it.</p>
+    </div>
+    <div class="pitch-flow" id="pitch-flow"></div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">Sample answer</div>
+      <h2>Read it out loud until it sounds like you</h2>
+    </div>
+    <div class="card elevator-pitch-card">
+      <p id="elevator-pitch"></p>
+      <button type="button" class="copy-btn" id="copy-pitch-btn">📋 Copy pitch</button>
+    </div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">Practice My Answer</div>
+      <h2>Type (or speak, then type) your own version against the clock</h2>
+    </div>
+    <div class="card practice-card">
+      <div class="timer-row">
+        <div class="timer" id="pitch-timer">1:30</div>
+        <button class="btn-blue" id="pitch-start">▶ Start 90-sec timer</button>
+        <button class="btn-outline" id="pitch-reset">Reset</button>
+      </div>
+      <textarea id="pitch-text" placeholder="Start with the business problem: “PayFlow's finance team added rupees to dollars and summed fraud cases instead of fraudulent payments…”"></textarea>
+      <div class="pitch-meta" id="pitch-meta"></div>
+      <div class="pitch-checks" id="pitch-checks"></div>
+      <div class="copy-row"><button class="btn-dark" id="pitch-save">✓ Save &amp; mark practiced</button></div>
+    </div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">5-Minute Project Presentation</div>
+      <h2>When they say "present your project"</h2>
+      <p>The project PPT's 8 sections, about five minutes. Build the deck in this order, using your own dashboard screenshots.</p>
+    </div>
+    <div class="pres-list" id="pres-list"></div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">FAQ</div>
+      <h2>What if the interview doesn't go as scripted?</h2>
+    </div>
+    <div id="project-faq"></div>
+  </div>
+</section>
+
+<!-- ===================== CAREER ===================== -->
+<section class="view" id="view-career">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Resume Project</div>
+      <h2>Copy-ready resume description</h2>
+      <p>Paste this straight into the Projects section of your resume, then edit the bullets to match what <em>you</em> personally built.</p>
+    </div>
+    <div class="card resume-block" id="resume-block"></div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">More bullet options</div>
+      <h2>Swap in the bullets that match your role on the team</h2>
+    </div>
+    <div id="resume-bullets"></div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">LinkedIn</div>
+      <h2>Announce the project on LinkedIn</h2>
+    </div>
+    <div class="card elevator-pitch-card">
+      <p id="linkedin-post" style="white-space:pre-line;"></p>
+      <button type="button" class="copy-btn" id="copy-linkedin-btn">📋 Copy post</button>
+    </div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">Portfolio</div>
+      <h2>Make it a portfolio piece</h2>
+    </div>
+    <div class="tip-grid" id="portfolio-grid"></div>
+  </div>
+</section>
+
+<!-- ===================== GLOSSARY ===================== -->
+<section class="view" id="view-glossary">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Glossary</div>
+      <h2>Payments, fraud &amp; BI terms worth knowing cold</h2>
+      <p>The vocabulary interviewers assume you already have.</p>
+    </div>
+    <div class="filter-bar"><input class="search-input" id="gl-search" type="text" placeholder="Search terms — e.g. &quot;chargeback&quot;, &quot;MDR&quot;, &quot;grain&quot;…"></div>
+    <div class="gloss-grid" id="gloss-grid"></div>
+    <div class="quiz-launch-card" style="margin-top:24px;">
+      <div><h4>🎴 Flashcard Quiz Mode</h4><p>Flip through every glossary term, hide the definition, then self-grade.</p></div>
+      <button id="gl-quiz-launch-btn">Start Quiz</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== TIPS ===================== -->
+<section class="view" id="view-tips">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Student Tips</div>
+      <h2>What actually matters for a data analytics interview</h2>
+      <p>The difference between reciting definitions and sounding like someone who has shipped a dashboard.</p>
+    </div>
+    <div class="tip-grid" id="tip-grid"></div>
+    <div class="callout mt-40"><h4>The one habit that separates candidates</h4><p id="tip-callout"></p></div>
+    <div class="section-head mt-40">
+      <div class="eyebrow">Weak vs Strong</div>
+      <h2>See the difference a stronger answer makes</h2>
+    </div>
+    <div id="weak-strong-list"></div>
+    <div class="callout mt-40" style="text-align:center;">
+      <h4>Ready for the real thing?</h4>
+      <p style="margin-bottom:16px;">Print a one-page cheat sheet of every KPI and interview question you've starred (★).</p>
+      <button class="cheatsheet-btn" id="cheatsheet-btn">🖨️ Print my starred cheat sheet</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== LEARN MORE ===================== -->
+<section class="view" id="view-learnmore">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Learn More</div>
+      <h2>Free official resources for every tool in this project</h2>
+      <p>Straight from the source: Tableau, Power BI, MySQL and Microsoft's own free training, plus payments, disputes and UPI explainers.</p>
+    </div>
+    <div class="learn-grid" id="learn-grid"></div>
+  </div>
+</section>
+
+<div id="print-sheet"></div>
+
+<footer>
+  <div class="wrap footer-inner">
+    <div>
+      <a href="#" class="footer-brand brand-home-link" style="text-decoration:none;color:inherit;"><img src="assets/favicon.png" alt="" class="footer-logo"> PayFlow Fintech Analytics Capstone</a>
+      <div style="margin-top:4px;">by Mahendra Singh · Data Analyst Trainer, <a href="https://excelr.in/data_analyst_course_delhi/" target="_blank" rel="noopener">ExcelR</a>. Built for the PayFlow Fintech Merchant &amp; Fraud Risk Analytics capstone; PayFlow is fictional and the dataset is for training use only. <span style="opacity:.6;font-family:var(--mono);font-size:11px;">Site version 20261022-pf</span></div>
+    </div>
+    <div class="footer-links">
+      <a href="https://www.linkedin.com/in/mahendra-singh-83699485/" target="_blank" rel="noopener"><svg class="soc-ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="5" fill="#0A66C2"/><path d="M6.2 9.6h2.6V18H6.2zM7.5 5.6a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM10.5 9.6H13v1.2c.4-.7 1.3-1.4 2.7-1.4 2.8 0 3.3 1.8 3.3 4.2V18h-2.6v-3.9c0-.9 0-2.1-1.3-2.1s-1.5 1-1.5 2V18h-2.6z" fill="#fff"/></svg>LinkedIn</a>
+      <a href="https://medium.com/@mahendraa1188" target="_blank" rel="noopener"><svg class="soc-ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="5" fill="#111"/><ellipse cx="8" cy="12" rx="4.2" ry="4.4" fill="#fff"/><ellipse cx="15.2" cy="12" rx="2" ry="4.1" fill="#fff"/><ellipse cx="19.3" cy="12" rx=".8" ry="3.7" fill="#fff"/></svg>Medium</a>
+      <a href="https://www.youtube.com/channel/UC2q-vZWSlQpiGiMcSLUqnIg" id="youtube-link" target="_blank" rel="noopener"><svg class="soc-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="4.5" width="22" height="15" rx="4.5" fill="#FF0000"/><path d="M10 8.6v6.8l5.8-3.4z" fill="#fff"/></svg>YouTube</a>
+    </div>
+  </div>
+</footer>
+
+  </main>
+</div>
+
+<!-- ===================== ASK Mahendra ===================== -->
+<div class="chat-fab-wrap">
+  <div class="chat-fab-label" id="chat-fab-label">Ask Mahendra</div>
+  <button class="chat-fab" id="chat-fab" aria-label="Ask Mahendra"><img src="assets/mahendra-avatar.png" alt="Mahendra Singh" class="chat-fab-avatar"></button>
+</div>
+<div class="chat-panel" id="chat-panel">
+  <div class="chat-panel-head">
+    <img src="assets/mahendra-avatar.png" alt="Mahendra Singh" class="chat-panel-avatar">
+    <div>
+      <div class="chat-panel-title">Ask Mahendra</div>
+      <div class="chat-panel-sub">Searches the KPIs, SQL, interview prep, data model &amp; glossary on this site</div>
+    </div>
+    <button class="chat-panel-close" id="chat-panel-close" aria-label="Close chat">✕</button>
+  </div>
+  <div class="chat-panel-body" id="chat-panel-body">
+    <div class="chat-msg bot"><div class="chat-bubble">Hi, I'm Mahendra's assistant 👋 Ask me anything about this project: a KPI, a table, a formula, or an interview question. e.g. <em>"attempts vs intents"</em> or <em>"suspected vs confirmed fraud"</em>.</div></div>
+  </div>
+  <div class="chat-quick-replies" id="chat-quick-replies"></div>
+  <form class="chat-panel-input" id="chat-panel-form">
+    <input type="text" id="chat-input" placeholder="Ask Mahendra a question…" autocomplete="off">
+    <button type="submit" aria-label="Send">➤</button>
+  </form>
+</div>
+
+<!-- ===================== QUIZ ===================== -->
+<div class="quiz-overlay" id="quiz-overlay">
+  <div class="quiz-modal">
+    <div class="quiz-modal-head"><h4>🎴 Flashcard Quiz</h4><button class="quiz-close" id="quiz-close" aria-label="Close quiz">✕</button></div>
+    <div id="quiz-body"></div>
+  </div>
+</div>
+
+<!-- ===================== DASHBOARD / IMAGE MODAL ===================== -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-box"><button class="modal-close" id="modal-close" aria-label="Close">✕</button><div id="modal-body"></div></div>
+</div>
+
+<!-- ===================== COMMAND PALETTE ===================== -->
+<div class="cmdk-overlay" id="cmdk-overlay">
+  <div class="cmdk-box">
+    <div class="cmdk-input-row"><span>🔎</span><input type="text" id="cmdk-input" placeholder="Jump to a KPI, question, glossary term or page…" autocomplete="off"><span class="cmdk-hint">Esc</span></div>
+    <div class="cmdk-results" id="cmdk-results"></div>
+  </div>
+</div>
+
+<script src="pf-data.js?v=20261022-pf"></script>
+<script>document.write('<script src="schedule-config.js?t=' + Date.now() + '"><\/script>');</script>
+<script>document.write('<script src="project-schedule.js?t=' + Date.now() + '"><\/script>');</script>
+<script src="app.js?v=20261022-pf"></script>
+<script>window.VISIT_KEY = "payflow";</script>
+<script src="visit-kit.js?v=20261015-b"></script>
+<script src="ai-kit.js?v=20261015-ai2" defer></script>
+<script src="review-config.js?v=20261018-rv"></script>
+<script src="review-kit.js?v=20261018-wf" defer></script>
+</body>
+</html>

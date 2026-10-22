@@ -1,0 +1,15 @@
+/* PayFlow brand layer on top of the shared capstone theme */
+:root {
+  --teal: #1C64F2; --teal-deep: #1446B8; --teal-tint: #E8F0FE;
+  --blue: #3B2FC9; --blue-tint: #EEEBFF;
+}
+body.dark-mode { --teal: #5B8DFF; --teal-deep: #8FB0FF; --teal-tint: #14203F; }
+.progress-fill { background: linear-gradient(90deg, #1C64F2, #7C3AED) !important; }
+.ds-h1 span { background: linear-gradient(90deg, #1C64F2, #7C3AED); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.kpi-sql { margin-top: 8px; }
+.kpi-sql summary { cursor: pointer; font-size: 12px; font-weight: 700; color: var(--teal-deep); font-family: var(--mono); }
+.kpi-sql pre.formula.dax { white-space: pre-wrap; word-break: break-word; font-size: 11.5px; line-height: 1.5; margin: 6px 0 0; }
+.dd-meta { font-size: 12.5px; color: var(--ink-muted); margin: 2px 0 10px; }
+#testcase-table td { font-size: 12.5px; vertical-align: top; }
+#testcase-table code { white-space: normal; word-break: break-all; }
+.sql-block pre { white-space: pre; }
