@@ -170,7 +170,7 @@
   function curView() { const v = document.querySelector("section.view.active"); return v ? v.id.replace(/^view-/, "") : "home"; }
   function ping(page, force) {
     if (!profile) return; const now = Date.now(); page = page || "home";
-    if (!force && lastPing[page] && now - lastPing[page] < 90000) return; lastPing[page] = now;
+    if (!force && lastPing[page] && now - lastPing[page] < 600000) return;   // one visit per page per 10 minutes (saves database requests) lastPing[page] = now;
     post({ action: "visit", vid: profile.vid, uid: profile.uid || "", last4: profile.last4 || "", name: profile.name || "", group: profile.group || "", batch: profile.batch || "", page }).catch(() => {});
   }
   function hookViews() {
@@ -199,7 +199,7 @@
     fetch(API, { method: "POST", keepalive: true, body: JSON.stringify({ action: "progress", name: profile.name, group: profile.group || "", data: c.data, summary: c.summary }) }).catch(() => { lastPush = ""; });
   }
   function startPush() {
-    if (pushTimer) return; pushNow(); pushTimer = setInterval(pushNow, 15000);
+    if (pushTimer) return; pushNow(); pushTimer = setInterval(() => { if (document.visibilityState === "visible") pushNow(); }, 60000);
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") pushNow(); });
     window.addEventListener("hub-progress", () => setTimeout(pushNow, 300));
   }
@@ -277,7 +277,7 @@
     box.querySelectorAll("[data-vb]").forEach(t => t.addEventListener("click", () => { rState.batch = rState.batch === t.dataset.vb ? "All" : t.dataset.vb; rState.group = "All"; re(); }));
     box.querySelector("#vk-s").addEventListener("change", (e) => { rState.sort = e.target.value; re(); });
     box.querySelector("#vk-t").addEventListener("change", (e) => { rState.today = e.target.checked; re(); });
-    box.querySelector("#vk-ref").addEventListener("click", loadReport);
+    box.querySelector("#vk-ref").addEventListener("click", () => loadReport(true));
     box.querySelector("#vk-csv").addEventListener("click", () => {
       const q = (v) => `"${String(v == null ? "" : v).replace(/"/g, '""')}"`;
       const strip = (v) => String(v).replace(/<[^>]*>/g, "");
@@ -287,10 +287,10 @@
       a.download = `student-visits-${KEY}-${today}.csv`; document.body.appendChild(a); a.click(); a.remove();
     });
   }
-  function loadReport() {
+  function loadReport(fresh) {
     const box = document.getElementById("vk-report"); if (!box) return;
     if (!report) box.innerHTML = `<div class="vk-head"><h3>👥 Student visits</h3><span>Loading…</span></div>`;
-    post({ action: "report", pin: ss(PINK) || "", days: rState.days }).then(j => {
+    post({ action: "report", pin: ss(PINK) || "", days: rState.days, fresh: fresh === true }).then(j => {
       if (!j.ok) { box.innerHTML = `<div class="vk-head"><h3>👥 Student visits</h3><span>${esc(j.error || "Could not load")}</span></div>`; return; }
       report = j; renderReport();
       try { const by = {}; merged().forEach(s => { const b = normCode(s.batch) || "—"; const x = by[b] || (by[b] = { n: 0, today: 0 }); x.n++; if (s.days.has(j.today)) x.today++; });

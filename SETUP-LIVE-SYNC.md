@@ -94,3 +94,11 @@ Sidebar → Dashboards → "Mahendra Dashboard Evaluation Feedback". Students up
 Fix (18 Oct): trainer changes made in two tabs or two devices no longer overwrite each other (changes are merged before saving).
 
 - Review also marks where each problem is (on the screenshot, or on the layout read from a Tableau / Power BI file) and suggests a full wireframe that students can download (SVG/PNG) or edit for free in Excalidraw (excalidraw.com).
+
+## Upstash request limit (22 Oct 2026)
+
+The free Upstash plan allows a fixed number of database requests per month (500,000). When it is used up, the site shows a red "Live sync is not working right now" notice on Project Schedule, and student login, new projects and status changes stop saving until the limit resets or the plan is upgraded.
+
+- Give every site its **own** Upstash database (Vercel → Storage → Create → Upstash Redis → connect only to this project). Each free database has its own monthly limit.
+- Usage was reduced on 22 Oct: students' open tabs check the schedule every 5 minutes and only while the tab is visible; visits are recorded once per page per 10 minutes; the trainer report is cached for 5 minutes (the ⟳ Refresh button always gets fresh data); the ProjectVault Trainer Dashboard refreshes every 10 minutes.
+- Check usage any time in the Upstash console → your database → Usage.

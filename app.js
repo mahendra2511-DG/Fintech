@@ -852,10 +852,6 @@ const SAMPLE_IMAGE_DASHBOARDS = [
     does: "Filters (region, industry, risk tier, payment method, investigation status), KPI cards for transactions, confirmed fraud amount and count, suspected-risk amount and open investigations, fraud amount & rate trend, risk-band donut, fraud by method, industry and amount band, disputes & chargebacks trend, top merchants by fraud and a 'transactions requiring investigation' table.",
     kpis: "Confirmed fraud amount / count / rate, suspected-risk amount, open investigations, disputes, chargebacks", visuals: "KPI cards, bar + line, donut, columns, horizontal bars, stacked columns, investigation table",
     proxima: `Your version: ${fmtN(K.attempts)} attempts, ${usd(K.cf_amount)} confirmed fraud on ${K.cf_payments} payments (${K.cf_rate_value}%), ${usdK(K.suspected_amount)} suspected, ${K.open_cases} open investigations.` },
-  { img: "assets/payflow-data-model.jpg", t: "PayFlow Data Model & ERD", by: "Project data model",
-    does: "Shows fact_payment at the centre, the shared dimensions (date, merchant, payment method, transaction status, customer, risk reason) and the child facts (refunds, disputes, fraud cases, settlements and settlement lines), with which pieces feed each dashboard.",
-    kpis: "—", visuals: "Entity-relationship diagram",
-    proxima: "The delivered dataset adds dim_fx_rate, dim_pricing_plan, dim_account_manager, dim_merchant_status_history, fact_risk_assessment and the daily snapshot to this core." },
 ];
 
 const VIDI_DASHBOARDS = [
@@ -2299,16 +2295,17 @@ let schEditCode = null, schNewOpen = false;
 const SCH_CFG = String(window.PROJECT_SCHEDULE_API || "").trim();
 const SCH_AUTO = SCH_CFG.toLowerCase() === "auto";
 let SCH_API = SCH_AUTO ? "" : SCH_CFG;
-let schRemote = null, schSyncMsg = "", schSaveTimer = null, schLoaded = !SCH_API;
+let schRemote = null, schSyncMsg = "", schSaveTimer = null, schLoaded = !SCH_API, schDown = "", schLastLoad = 0;
 function schProbe() {
   if (!SCH_AUTO || !/^https?:$/.test(location.protocol)) return;
-  fetch("api/schedule?t=" + Date.now(), { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(j => {
+  fetch("api/schedule?t=" + Date.now(), { cache: "no-store" }).then(r => r.json().catch(() => null).then(j => [r, j])).then(([r, j]) => {
+    if (j && !r.ok && j.error) { schDown = j.error; renderSchedule(); return; }      // database error (e.g. Upstash monthly limit): tell the trainer
     if (!j || j.configured === false || !Array.isArray(j.projects)) return;
     SCH_API = "api/schedule";
     if (schIsTrainer()) { try { if (!sessionStorage.getItem(SCH_PIN)) sessionStorage.removeItem(SCH_UNLOCK); } catch (e) {} }   // keep a server-checked login across reloads
     schRemote = j.projects.length ? j : null; schBase = schRemote ? schClone(schRemote) : null; schLoaded = true;
     renderSchedule(); renderHeroSchedule();
-    setInterval(() => { if (!schIsTrainer() || schIdle()) schLoadRemote(true); }, schIsTrainer() ? 30000 : 60000);
+    setInterval(() => { if (document.visibilityState === "visible" && (!schIsTrainer() || schIdle())) schLoadRemote(true); }, schIsTrainer() ? 60000 : 300000);   // light on database requests
   }).catch(() => {});
 }
 /* 3-way merge so two trainer tabs/devices never overwrite each other's changes */
@@ -2340,10 +2337,11 @@ function schIdle() {   // trainer is not in the middle of typing / a form
   if (schNewOpen || document.getElementById("sch-login")) return false;
   return !(a && root && root.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName));
 }
-document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && SCH_API && schIsTrainer() && schIdle()) schLoadRemote(true); });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && SCH_API && Date.now() - schLastLoad > 120000 && (!schIsTrainer() || schIdle())) schLoadRemote(true); });
 function schApi(payload) { return fetch(SCH_API, { method: "POST", body: JSON.stringify(payload) }).then(r => r.json()); }
 function schLoadRemote(silent) {
   if (!SCH_API) return Promise.resolve();
+  schLastLoad = Date.now();
   return fetch(SCH_API + (SCH_API.includes("?") ? "&" : "?") + "t=" + Date.now()).then(r => r.json()).then(j => {
     if (schIsTrainer() && (schSaveTimer || !schIdle())) return;
     const nx = j && j.projects && j.projects.length ? j : null;
@@ -2523,7 +2521,8 @@ function renderSchedule() {
   const picker = !tr && !(me && me.batch && p && schNorm(me.batch) === schNorm(p.code)) && d.projects.length > 1
     ? `<label class="sch-pick">Project code <select id="sch-select">${d.projects.map(x => `<option value="${esc(x.code)}" ${p && x.code === p.code ? "selected" : ""}>${esc(x.code)} · ${esc(schTimeLabel(x))}</option>`).join("")}</select></label>` : "";
   const tabs = tr ? schTabsHtml(d, p) : "";
-  if (!p) { root.innerHTML = `${tabs}<div class="card sch-empty">No project has been published yet. ${tr ? "Create one with <b>+ New project</b> above." : "Ask your trainer for the project code."}</div>`; schBind(d, null); return; }
+  const downBox = schDown ? `<div class="card sch-down" role="alert">⚠️ <b>Live sync is not working right now.</b> The site's database answered: <i>${esc(String(schDown).slice(0, 160))}</i>. Student logins, new projects and status changes can't be saved until it works again${/max requests limit/i.test(schDown) ? " (the free Upstash monthly request limit is used up: see SETUP-LIVE-SYNC.md)" : ""}.</div>` : "";
+  if (!p) { root.innerHTML = `${downBox}${tabs}<div class="card sch-empty">No project has been published yet. ${tr ? "Create one with <b>+ New project</b> above." : "Ask your trainer for the project code."}</div>`; schBind(d, null); return; }
   const ds = schStageDates(p); const nx = schNext(p);
   const timeline = SCH_STAGES.map((s, i) => {
     const [ph, pl] = schPhase(p, ds[s.key]);
@@ -2542,7 +2541,7 @@ function renderSchedule() {
     const st = (p.status && p.status[g.id]) || {}; const isMine = mine && mine.id === g.id;
     return `<tr class="${isMine ? "sch-mine" : ""}"><td><strong>${esc(g.name)}</strong>${isMine ? ' <span class="sch-you">Your group</span>' : ""}${g.members ? `<div class="sch-mem">${esc(g.members)}</div>` : ""}</td>${SCH_COLS.map(([k]) => `<td>${stChip(schGroupStatus(p, g, k), k === "sqlqa" && st.sqlqaWeek ? ` · ${st.sqlqaWeek === "tableau" ? "Tableau wk" : "Power BI wk"}` : "")}</td>`).join("")}<td class="sch-note">${esc(st.note || "")}</td></tr>`;
   }).join("");
-  root.innerHTML = `${tr ? `<div id="sch-batches-wrap">${schBatchesHtml(d, p)}</div>` : ""}${tabs}${picker}${schMyCardHtml(p)}
+  root.innerHTML = `${downBox}${tr ? `<div id="sch-batches-wrap">${schBatchesHtml(d, p)}</div>` : ""}${tabs}${picker}${schMyCardHtml(p)}
     <div class="sch-head card"><div><div class="sch-code">${esc(p.code)}</div><h3>${esc(p.name || SCH_PNAME)}</h3>
       <p>Kick-off ${fmtD(ds.kickoff)} · weekly presentations every <strong>${SCH_DAYS[p.presDay]}</strong> · <strong>${esc(schTimeLabel(p))}</strong> · ${(p.groups || []).length} groups</p></div>
       ${nx ? `<div class="sch-next ${schSoon(p, ds[nx.key]) ? "sch-soon" : ""}"><span>Next meeting</span><strong>${esc(nx.t)}</strong><em>${fmtD(ds[nx.key])} · ${esc(schTimeLabel(p))}</em></div>` : `<div class="sch-next done"><span>Status</span><strong>Project completed 🎉</strong></div>`}</div>
@@ -2739,6 +2738,7 @@ function renderHeroSchedule() {
   .sch-nx.sch-soon{background:#16A34A;color:#fff;font-weight:700}
   .sch-stage.sch-soon .sch-ph.next,.sch-stage.sch-soon .sch-ph.today{background:#DCFCE7;color:#15803D}
   .hf-li.sch-soon span:first-child{color:#15803D!important}
+  .sch-down{padding:12px 16px;margin-bottom:14px;background:#FEF2F2!important;border:1px solid #FECACA!important;color:#7F1D1D;font-size:13.5px;line-height:1.5}
   .sch-soon-pill{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:20px;margin-left:4px}
   .hf-li.sch-upnext.sch-soon{background:rgba(34,197,94,.22);color:#14532D}
   .hf-day.sch-soon{background:#16A34A!important;color:#fff!important}
@@ -2768,7 +2768,7 @@ setInterval(() => { try { if (!schIsTrainer()) renderHeroSchedule(); } catch (e)
 document.addEventListener("DOMContentLoaded", () => {
   renderSchedule(); renderHeroSchedule();
   if (schFromHash()) setTimeout(() => { if (typeof switchView === "function") switchView("schedule"); }, 50);
-  if (SCH_API) { schLoadRemote(); setInterval(() => { if (!schIsTrainer()) schLoadRemote(true); }, 60000); }
+  if (SCH_API) { schLoadRemote(); setInterval(() => { if (!schIsTrainer() && document.visibilityState === "visible") schLoadRemote(true); }, 300000); }
   else schProbe();
 });
 /* ============================================================
