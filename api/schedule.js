@@ -178,6 +178,9 @@ module.exports = async function handler(req, res) {
     }
     if (b.action === "report") {
       const days = Math.min(Math.max(+b.days || 30, 7), 120); const now = Date.now();
+      // a report costs ~100 + 2 × students database commands, so it is cached for 5 minutes (1 command when cached)
+      const RC = PFX + "repcache:" + days;
+      if (!b.fresh) { const c = await redis(env, "GET", RC); if (c) { try { return send(res, 200, Object.assign(JSON.parse(c), { cached: true })); } catch (e) {} } }
       const dayList = Array.from({ length: days }, (_, i) => istDay(now - (days - 1 - i) * 86400000));
       const head = await pipe(env, [["SMEMBERS", PFX + "students"], ["PFCOUNT", PFX + "v:all"], ["GET", PFX + "views"],
         ...dayList.map(d => ["PFCOUNT", PFX + "v:day:" + d]), ...dayList.map(d => ["GET", PFX + "views:day:" + d]), ...dayList.map(d => ["SCARD", PFX + "d:" + d])]);
@@ -194,7 +197,9 @@ module.exports = async function handler(req, res) {
       const ps = await redis(env, "HGETALL", PFX + "progsum"); const progress = {};
       if (Array.isArray(ps)) for (let k = 0; k < ps.length; k += 2) { try { progress[ps[k]] = JSON.parse(ps[k + 1]); } catch (e) {} }
       else if (ps) for (const k in ps) { try { progress[k] = JSON.parse(ps[k]); } catch (e) {} }
-      return send(res, 200, { ok: true, today: istDay(now), unique: +head[1] || 0, views: +head[2] || 0, daily, students, progress });
+      const out = { ok: true, today: istDay(now), unique: +head[1] || 0, views: +head[2] || 0, daily, students, progress, at: now };
+      try { const sv = JSON.stringify(out); if (sv.length < 900000) await redis(env, "SET", RC, sv, "EX", "300"); } catch (e) {}
+      return send(res, 200, out);
     }
     return send(res, 400, { ok: false, error: "Unknown action" });
   } catch (e) {
