@@ -1737,7 +1737,7 @@ function initSearch() {
 }
 
 /* ============================================================
-   Ask Mahendra — client-side search over the site's own content
+   Ask Dexa — client-side search over the site's own content
    ============================================================ */
 function buildChatIndex() {
   const idx = [];
@@ -2295,12 +2295,13 @@ let schEditCode = null, schNewOpen = false;
 const SCH_CFG = String(window.PROJECT_SCHEDULE_API || "").trim();
 const SCH_AUTO = SCH_CFG.toLowerCase() === "auto";
 let SCH_API = SCH_AUTO ? "" : SCH_CFG;
-let schRemote = null, schSyncMsg = "", schSaveTimer = null, schLoaded = !SCH_API, schDown = "", schLastLoad = 0;
+let schRemote = null, schSyncMsg = "", schSaveTimer = null, schLoaded = !SCH_API, schDown = "", schOff = false, schLastLoad = 0;
 function schProbe() {
   if (!SCH_AUTO || !/^https?:$/.test(location.protocol)) return;
   fetch("api/schedule?t=" + Date.now(), { cache: "no-store" }).then(r => r.json().catch(() => null).then(j => [r, j])).then(([r, j]) => {
     if (j && !r.ok && j.error) { schDown = j.error; renderSchedule(); return; }      // database error (e.g. Upstash monthly limit): tell the trainer
-    if (!j || j.configured === false || !Array.isArray(j.projects)) return;
+    if (j && j.configured === false) { schOff = true; renderSchedule(); return; }      // no Upstash database on this site
+    if (!j || !Array.isArray(j.projects)) return;
     SCH_API = "api/schedule";
     if (schIsTrainer()) { try { if (!sessionStorage.getItem(SCH_PIN)) sessionStorage.removeItem(SCH_UNLOCK); } catch (e) {} }   // keep a server-checked login across reloads
     schRemote = j.projects.length ? j : null; schBase = schRemote ? schClone(schRemote) : null; schLoaded = true;
@@ -2503,7 +2504,9 @@ function schBatchesHtml(d, cur) {
 function schMyCardHtml(p) {
   const m = schMe(); if (!m || schIsTrainer() || !p) return "";
   const g = schMyGroup(p);
-  if (!g) return `<div class="card sch-my">👋 <b>${esc(m.name)}</b> · ${esc(p.code)}. Your group (${esc(m.group || "none")}) is not in this project's group list, so your status can't be shown. Click <b>change</b> next to your name in the sidebar and pick your group.</div>`;
+  if (!g) return m.group
+    ? `<div class="card sch-my">👋 <b>${esc(m.name)}</b> · ${esc(p.code)}. Your group (${esc(m.group)}) is not in this project's group list, so your status can't be shown. Click <b>account</b> next to your name in the sidebar and pick your group.</div>`
+    : `<div class="card sch-my">👋 <b>${esc(m.name)}</b> · ${esc(p.code)}. Your group is not assigned yet. After the first meeting, pick your group: click <b>account</b> next to your name in the sidebar (the site also asks you when you log in).</div>`;
   const ds = schStageDates(p); const nx = schNext(p); const st = (p.status && p.status[g.id]) || {};
   const pend = SCH_COLS.filter(([k]) => schGroupStatus(p, g, k) !== "done").map(([, l]) => l);
   return `<div class="card sch-my"><div class="sch-my-h">👋 <b>${esc(m.name)}</b> · <b>${esc(g.name)}</b> · ${esc(p.code)} · every ${SCH_DAYS[p.presDay]}, ${esc(schTimeLabel(p))}</div>
@@ -2521,7 +2524,8 @@ function renderSchedule() {
   const picker = !tr && !(me && me.batch && p && schNorm(me.batch) === schNorm(p.code)) && d.projects.length > 1
     ? `<label class="sch-pick">Project code <select id="sch-select">${d.projects.map(x => `<option value="${esc(x.code)}" ${p && x.code === p.code ? "selected" : ""}>${esc(x.code)} · ${esc(schTimeLabel(x))}</option>`).join("")}</select></label>` : "";
   const tabs = tr ? schTabsHtml(d, p) : "";
-  const downBox = schDown ? `<div class="card sch-down" role="alert">⚠️ <b>Live sync is not working right now.</b> The site's database answered: <i>${esc(String(schDown).slice(0, 160))}</i>. Student logins, new projects and status changes can't be saved until it works again${/max requests limit/i.test(schDown) ? " (the free Upstash monthly request limit is used up: see SETUP-LIVE-SYNC.md)" : ""}.</div>` : "";
+  const offNote = schIsTrainer() ? " <b>Trainer:</b> your changes are saved only in this browser, so students and your other devices won't see them. Connect Upstash Redis in Vercel → Storage for this project and redeploy (see SETUP-LIVE-SYNC.md)." : "";
+  const downBox = schOff && !schDown ? `<div class="card sch-down off" role="status">ℹ️ <b>Live updates are off on this site</b>: its database is not connected, so this is the published schedule.${offNote}</div>` : schDown ? `<div class="card sch-down" role="alert">⚠️ <b>Live sync is not working right now.</b> The site's database answered: <i>${esc(String(schDown).slice(0, 160))}</i>. Student logins, new projects, time and status changes can't be saved until it works again${/max requests limit/i.test(schDown) ? " (the free Upstash monthly request limit is used up: see SETUP-LIVE-SYNC.md)" : ""}.</div>` : "";
   if (!p) { root.innerHTML = `${downBox}${tabs}<div class="card sch-empty">No project has been published yet. ${tr ? "Create one with <b>+ New project</b> above." : "Ask your trainer for the project code."}</div>`; schBind(d, null); return; }
   const ds = schStageDates(p); const nx = schNext(p);
   const timeline = SCH_STAGES.map((s, i) => {
@@ -2738,6 +2742,7 @@ function renderHeroSchedule() {
   .sch-nx.sch-soon{background:#16A34A;color:#fff;font-weight:700}
   .sch-stage.sch-soon .sch-ph.next,.sch-stage.sch-soon .sch-ph.today{background:#DCFCE7;color:#15803D}
   .hf-li.sch-soon span:first-child{color:#15803D!important}
+  .sch-down.off{background:#FFFBEB!important;border-color:#FDE68A!important;color:#78350F}
   .sch-down{padding:12px 16px;margin-bottom:14px;background:#FEF2F2!important;border:1px solid #FECACA!important;color:#7F1D1D;font-size:13.5px;line-height:1.5}
   .sch-soon-pill{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:20px;margin-left:4px}
   .hf-li.sch-upnext.sch-soon{background:rgba(34,197,94,.22);color:#14532D}
@@ -2771,6 +2776,12 @@ document.addEventListener("DOMContentLoaded", () => {
   if (SCH_API) { schLoadRemote(); setInterval(() => { if (!schIsTrainer() && document.visibilityState === "visible") schLoadRemote(true); }, 300000); }
   else schProbe();
 });
+/* read-only access for other kits (Dexa Coach certificate check) */
+window.__SCH = { data: schData, myGroup: schMyGroup, norm: schNorm, stageDates: schStageDates, status: schGroupStatus };
+/* read-only access for other kits (Dexa Coach certificate check) */
+window.__SCH = { data: schData, myGroup: schMyGroup, norm: schNorm, stageDates: schStageDates, status: schGroupStatus };
+/* read-only access for other kits (Dexa Coach certificate check) */
+window.__SCH = { data: schData, myGroup: schMyGroup, norm: schNorm };
 /* ============================================================
    Job Simulator: Incident Room, Broken Dashboard, Stakeholder Simulator
    + cloud progress hook (window.HUB_PROGRESS, used by visit-kit.js)

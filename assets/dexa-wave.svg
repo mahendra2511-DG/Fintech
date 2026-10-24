@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
+  <defs>
+    <radialGradient id="dw-bg" cx="1" cy=".35" r="1"><stop offset="0" stop-color="#8B5CF6"/><stop offset=".55" stop-color="#6D28D9"/><stop offset="1" stop-color="#4338CA"/></radialGradient>
+    <linearGradient id="dw-flap" gradientUnits="userSpaceOnUse" x1="10" y1="60" x2="84" y2="100"><stop offset="0" stop-color="#A9AEB8"/><stop offset=".22" stop-color="#D3D7DE"/><stop offset=".62" stop-color="#F4F5F8"/><stop offset=".86" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E3E6EC"/></linearGradient>
+    <linearGradient id="dw-fold" gradientUnits="userSpaceOnUse" x1="84" y1="96" x2="98" y2="110"><stop offset="0" stop-color="#1E1B4B" stop-opacity=".55"/><stop offset="1" stop-color="#1E1B4B" stop-opacity="0"/></linearGradient>
+    <linearGradient id="dw-body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9A6532"/><stop offset="1" stop-color="#7A4A22"/></linearGradient>
+    <filter id="dw-sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="#1E1B4B" flood-opacity=".28"/></filter>
+    <clipPath id="dw-k1"><circle cx="116" cy="96" r="12"/></clipPath><clipPath id="dw-k2"><circle cx="140" cy="96" r="12"/></clipPath>
+  </defs>
+  <path d="M180 2 V170 a10 10 0 0 1 -10 10 H2 Z" fill="url(#dw-bg)"/>
+  <!-- curled page flap -->
+  <path d="M0 180 L180 0 L180 16 L14 180 Z" fill="url(#dw-fold)"/>
+  <path d="M0 180 L180 0 L40 5 C22 6 13 14 12 32 L8.4 104 C7.4 136 4.8 160 0 180 Z" fill="url(#dw-flap)" filter="url(#dw-sh)"/>
+  <path d="M1 176 L178 2" stroke="#FFFFFF" stroke-width="1.4" opacity=".85"/>
+  <!-- owl -->
+  <g>
+    <ellipse cx="128" cy="168" rx="11" ry="4" fill="#1E1B4B" opacity=".25"/>
+    <!-- body -->
+    <path d="M96 168 C90 140 96 112 128 108 C160 112 166 140 160 168 Z" fill="url(#dw-body)"/>
+    <path d="M110 166 C106 146 112 130 128 128 C144 130 150 146 146 166 Z" fill="#F3D9B1"/>
+    <path d="M118 140 q4 3 8 0 M130 140 q4 3 8 0 M122 152 q4 3 8 0 M134 152 q4 3 8 0" fill="none" stroke="#C9A06A" stroke-width="1.6" stroke-linecap="round"/>
+    <!-- right wing resting -->
+    <path d="M158 128 C168 140 166 158 156 164 C154 150 152 138 158 128 Z" fill="#6B4220"/>
+    <!-- left wing waving -->
+    <path d="M100 124 C86 116 78 98 82 84 C92 92 100 106 104 120 Z" fill="#6B4220"/>
+    <path d="M82 84 l-4 -6 M86 86 l-3 -7 M90 89 l-1 -7" stroke="#6B4220" stroke-width="3" stroke-linecap="round"/>
+    <!-- head -->
+    <path d="M100 112 C96 88 108 72 128 72 C148 72 160 88 156 112 C150 122 106 122 100 112 Z" fill="url(#dw-body)"/>
+    <path d="M104 84 L100 64 L116 76 Z M152 84 L156 64 L140 76 Z" fill="#6B4220"/>
+<g class="dx-eyes">
+    <circle cx="116" cy="96" r="12" fill="#fff"/><circle cx="140" cy="96" r="12" fill="#fff"/>
+    <g class="dx-pu"><circle cx="116" cy="97" r="5.6" fill="#111827"/><circle cx="140" cy="97" r="5.6" fill="#111827"/>
+      <circle cx="118" cy="95" r="1.9" fill="#fff"/><circle cx="142" cy="95" r="1.9" fill="#fff"/></g>
+    <g clip-path="url(#dw-k1)"><rect class="dx-lid" x="104" y="84" width="24" height="25" fill="#8A5A2B"/></g>
+    <g clip-path="url(#dw-k2)"><rect class="dx-lid" x="128" y="84" width="24" height="25" fill="#8A5A2B"/></g>
+    <circle cx="116" cy="96" r="13.2" fill="none" stroke="#111827" stroke-width="2.8"/><circle cx="140" cy="96" r="13.2" fill="none" stroke="#111827" stroke-width="2.8"/>
+    <path d="M125 94 Q128 91 131 94" fill="none" stroke="#111827" stroke-width="2.6" stroke-linecap="round"/></g>
+    <path d="M124 106 L128 114 L132 106 Z" fill="#F59E0B"/>
+    <!-- feet -->
+    <path d="M116 168 l-3 6 M120 168 v7 M124 168 l3 6 M132 168 l-3 6 M136 168 v7 M140 168 l3 6" stroke="#F59E0B" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  <!-- speech bubble -->
+  <g filter="url(#dw-sh)">
+    <rect x="22" y="40" width="86" height="30" rx="10" fill="#111827"/>
+    <path d="M90 68 L100 80 L96 66 Z" fill="#111827"/>
+    <text x="65" y="60" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="14" font-weight="800" fill="#fff">Ask Dexa</text>
+  </g>
+</svg>

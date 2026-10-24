@@ -1,0 +1,61 @@
+/* Ask Dexa — page-corner launcher for the project assistant.
+   An owl peeks from a curled page corner (bottom-right); on hover it waves; click opens the existing chat panel
+   (same AI answers as before: ai-kit.js + /api/ask, with the site's own search as fallback). */
+(function () {
+  if (window.__dexa) return; window.__dexa = true;
+  const css = `
+  .chat-fab-wrap{display:none!important}
+  .dexa{position:fixed;right:0;bottom:0;width:92px;height:142px;z-index:60;border:0;padding:0;margin:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .dexa svg{position:absolute;right:0;bottom:0;display:block;pointer-events:none;user-select:none;overflow:visible}
+  .dexa .dx-pu{transition:transform .12s ease-out}
+  .dexa .dx-lid{transform-box:fill-box;transform-origin:50% 0;transform:scaleY(0)}
+  .dexa.blink .dx-lid{animation:dxBlink .2s ease-in-out}
+  @keyframes dxBlink{0%{transform:scaleY(0)}45%,55%{transform:scaleY(1)}100%{transform:scaleY(0)}}
+  .dexa .dx-l{position:absolute;right:6px;bottom:116px;font:800 15px/1.1 Inter,"Segoe UI",Arial,sans-serif;color:#0F172A;letter-spacing:-.2px;white-space:nowrap;text-shadow:0 0 3px #fff,0 0 6px #fff,0 0 1px #fff;transition:opacity .2s ease}
+  .dexa .dx-c{width:84px;height:auto;opacity:1;transition:opacity .2s ease}
+  .dexa .dx-w{width:168px;height:auto;opacity:0;transform:scale(.5);transform-origin:100% 100%;transition:transform .3s ease,opacity .25s ease}
+  .dexa:hover .dx-c,.dexa:focus-visible .dx-c,.dexa.open .dx-c,.dexa:hover .dx-l,.dexa:focus-visible .dx-l,.dexa.open .dx-l{opacity:0}
+  .dexa:hover .dx-w,.dexa:focus-visible .dx-w,.dexa.open .dx-w{opacity:1;transform:scale(1)}
+  .dexa:focus-visible{outline:none}.dexa:focus-visible .dx-w{filter:drop-shadow(0 0 3px #4F46E5)}
+  .dexa .dx-x{position:absolute;right:10px;bottom:132px;width:26px;height:26px;border-radius:50%;background:#111827;color:#fff;font:700 13px/26px Inter,Arial,sans-serif;text-align:center;opacity:0;transform:scale(.6);transition:.2s;pointer-events:none}
+  .dexa.open .dx-x{opacity:1;transform:scale(1)}
+  body.dexa-on .chat-panel{bottom:150px!important;right:18px!important}
+  @media (max-width:640px){.dexa{width:76px;height:118px}.dexa .dx-c{width:70px}.dexa .dx-l{font-size:13px;bottom:96px}.dexa .dx-w{width:132px}body.dexa-on .chat-panel{bottom:112px!important;right:8px!important;left:8px!important;width:auto!important}.dexa .dx-x{bottom:104px}}
+  @media print{.dexa{display:none}}
+  @media (prefers-reduced-motion:reduce){.dexa svg,.dexa .dx-pu{transition:none}}`;
+  function start() {
+    const fab = document.getElementById("chat-fab"), panel = document.getElementById("chat-panel");
+    if (!fab || !panel || document.querySelector(".dexa")) return;
+    const st = document.createElement("style"); st.id = "dexa-css"; st.textContent = css; document.head.appendChild(st);
+    const b = document.createElement("button"); b.type = "button"; b.className = "dexa"; b.id = "dexa";
+    b.setAttribute("aria-label", "Ask Dexa: open the project assistant"); b.setAttribute("aria-controls", "chat-panel"); b.setAttribute("aria-expanded", "false"); b.title = "Ask Dexa";
+    b.innerHTML = `<span class="dx-l" aria-hidden="true">Ask Dexa</span><svg class="dx-c" viewBox="0 0 100 124" aria-hidden="true" focusable="false"> <defs> <radialGradient id="cc-bg" cx="1" cy=".35" r="1"><stop offset="0" stop-color="#8B5CF6"/><stop offset=".55" stop-color="#6D28D9"/><stop offset="1" stop-color="#4338CA"/></radialGradient> <linearGradient id="cc-flap" gradientUnits="userSpaceOnUse" x1="6" y1="40" x2="52" y2="66"> <stop offset="0" stop-color="#A9AEB8"/><stop offset=".22" stop-color="#D3D7DE"/><stop offset=".62" stop-color="#F4F5F8"/><stop offset=".86" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E3E6EC"/></linearGradient> <linearGradient id="cc-fold" gradientUnits="userSpaceOnUse" x1="50" y1="62" x2="60" y2="70"><stop offset="0" stop-color="#1E1B4B" stop-opacity=".55"/><stop offset="1" stop-color="#1E1B4B" stop-opacity="0"/></linearGradient> <filter id="cc-sh" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="-1" dy="1" stdDeviation="1.6" flood-color="#000" flood-opacity=".25"/></filter> <clipPath id="cc-k1"><circle cx="54" cy="97" r="12"/></clipPath><clipPath id="cc-k2"><circle cx="81" cy="97" r="12"/></clipPath> </defs> <path d="M100 0 V118 Q100 124 94 124 H0 Z" fill="url(#cc-bg)"/> <g class="dx-eyes"> <circle cx="54" cy="97" r="12" fill="#fff"/><circle cx="81" cy="97" r="12" fill="#fff"/> <g class="dx-pu"><circle cx="54" cy="98" r="5.6" fill="#111827"/><circle cx="81" cy="98" r="5.6" fill="#111827"/> <circle cx="56" cy="96" r="1.9" fill="#fff"/><circle cx="83" cy="96" r="1.9" fill="#fff"/></g> <g clip-path="url(#cc-k1)"><rect class="dx-lid" x="42" y="85" width="24" height="25" fill="#7C4A1E"/></g> <g clip-path="url(#cc-k2)"><rect class="dx-lid" x="69" y="85" width="24" height="25" fill="#7C4A1E"/></g> <circle cx="54" cy="97" r="13.3" fill="none" stroke="#0F172A" stroke-width="2.7"/><circle cx="81" cy="97" r="13.3" fill="none" stroke="#0F172A" stroke-width="2.7"/> <path d="M63.5 94.5 Q67.5 91.6 71.5 94.5" fill="none" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round"/> </g> <path d="M0 124 L100 0 L100 11 L9 124 Z" fill="url(#cc-fold)"/> <path d="M0 124 L100 0 L22 3 C12 3.5 7 9 6.4 19 L4.6 70 C4 92 2.6 110 0 124 Z" fill="url(#cc-flap)" filter="url(#cc-sh)"/> <path d="M0.6 121 L99 1.2" stroke="#FFFFFF" stroke-width="1.1" opacity=".85"/> </svg><svg class="dx-w" viewBox="0 0 180 180" aria-hidden="true" focusable="false"> <defs> <radialGradient id="dw-bg" cx="1" cy=".35" r="1"><stop offset="0" stop-color="#8B5CF6"/><stop offset=".55" stop-color="#6D28D9"/><stop offset="1" stop-color="#4338CA"/></radialGradient> <linearGradient id="dw-flap" gradientUnits="userSpaceOnUse" x1="10" y1="60" x2="84" y2="100"><stop offset="0" stop-color="#A9AEB8"/><stop offset=".22" stop-color="#D3D7DE"/><stop offset=".62" stop-color="#F4F5F8"/><stop offset=".86" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E3E6EC"/></linearGradient> <linearGradient id="dw-fold" gradientUnits="userSpaceOnUse" x1="84" y1="96" x2="98" y2="110"><stop offset="0" stop-color="#1E1B4B" stop-opacity=".55"/><stop offset="1" stop-color="#1E1B4B" stop-opacity="0"/></linearGradient> <linearGradient id="dw-body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9A6532"/><stop offset="1" stop-color="#7A4A22"/></linearGradient> <filter id="dw-sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="#1E1B4B" flood-opacity=".28"/></filter> <clipPath id="dw-k1"><circle cx="116" cy="96" r="12"/></clipPath><clipPath id="dw-k2"><circle cx="140" cy="96" r="12"/></clipPath> </defs> <path d="M180 2 V170 a10 10 0 0 1 -10 10 H2 Z" fill="url(#dw-bg)"/> <path d="M0 180 L180 0 L180 16 L14 180 Z" fill="url(#dw-fold)"/> <path d="M0 180 L180 0 L40 5 C22 6 13 14 12 32 L8.4 104 C7.4 136 4.8 160 0 180 Z" fill="url(#dw-flap)" filter="url(#dw-sh)"/> <path d="M1 176 L178 2" stroke="#FFFFFF" stroke-width="1.4" opacity=".85"/> <g> <ellipse cx="128" cy="168" rx="11" ry="4" fill="#1E1B4B" opacity=".25"/> <path d="M96 168 C90 140 96 112 128 108 C160 112 166 140 160 168 Z" fill="url(#dw-body)"/> <path d="M110 166 C106 146 112 130 128 128 C144 130 150 146 146 166 Z" fill="#F3D9B1"/> <path d="M118 140 q4 3 8 0 M130 140 q4 3 8 0 M122 152 q4 3 8 0 M134 152 q4 3 8 0" fill="none" stroke="#C9A06A" stroke-width="1.6" stroke-linecap="round"/> <path d="M158 128 C168 140 166 158 156 164 C154 150 152 138 158 128 Z" fill="#6B4220"/> <path d="M100 124 C86 116 78 98 82 84 C92 92 100 106 104 120 Z" fill="#6B4220"/> <path d="M82 84 l-4 -6 M86 86 l-3 -7 M90 89 l-1 -7" stroke="#6B4220" stroke-width="3" stroke-linecap="round"/> <path d="M100 112 C96 88 108 72 128 72 C148 72 160 88 156 112 C150 122 106 122 100 112 Z" fill="url(#dw-body)"/> <path d="M104 84 L100 64 L116 76 Z M152 84 L156 64 L140 76 Z" fill="#6B4220"/> <g class="dx-eyes"> <circle cx="116" cy="96" r="12" fill="#fff"/><circle cx="140" cy="96" r="12" fill="#fff"/> <g class="dx-pu"><circle cx="116" cy="97" r="5.6" fill="#111827"/><circle cx="140" cy="97" r="5.6" fill="#111827"/> <circle cx="118" cy="95" r="1.9" fill="#fff"/><circle cx="142" cy="95" r="1.9" fill="#fff"/></g> <g clip-path="url(#dw-k1)"><rect class="dx-lid" x="104" y="84" width="24" height="25" fill="#8A5A2B"/></g> <g clip-path="url(#dw-k2)"><rect class="dx-lid" x="128" y="84" width="24" height="25" fill="#8A5A2B"/></g> <circle cx="116" cy="96" r="13.2" fill="none" stroke="#111827" stroke-width="2.8"/><circle cx="140" cy="96" r="13.2" fill="none" stroke="#111827" stroke-width="2.8"/> <path d="M125 94 Q128 91 131 94" fill="none" stroke="#111827" stroke-width="2.6" stroke-linecap="round"/></g> <path d="M124 106 L128 114 L132 106 Z" fill="#F59E0B"/> <path d="M116 168 l-3 6 M120 168 v7 M124 168 l3 6 M132 168 l-3 6 M136 168 v7 M140 168 l3 6" stroke="#F59E0B" stroke-width="3" stroke-linecap="round"/> </g> <g filter="url(#dw-sh)"> <rect x="22" y="40" width="86" height="30" rx="10" fill="#111827"/> <path d="M90 68 L100 80 L96 66 Z" fill="#111827"/> <text x="65" y="60" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="14" font-weight="800" fill="#fff">Ask Dexa</text> </g> </svg><span class="dx-x" aria-hidden="true">✕</span>`;
+    document.body.appendChild(b); document.body.classList.add("dexa-on");
+    const sync = () => { const o = panel.classList.contains("open"); b.classList.toggle("open", o); b.setAttribute("aria-expanded", String(o)); b.setAttribute("aria-label", o ? "Close Ask Dexa" : "Ask Dexa: open the project assistant"); };
+    b.addEventListener("click", () => { fab.click(); setTimeout(sync, 0); });
+    new MutationObserver(sync).observe(panel, { attributes: true, attributeFilter: ["class"] });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && panel.classList.contains("open")) { const c = document.getElementById("chat-panel-close"); if (c) c.click(); b.focus(); } });
+    // the owl watches you: pupils turn toward the cursor (or the focused field), and it blinks now and then
+    const still = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const pus = [...b.querySelectorAll(".dx-pu")];
+    let tx = null, ty = null, raf = 0;
+    const look = () => { raf = 0;
+      pus.forEach(g => { const svg = g.ownerSVGElement, r = svg.getBoundingClientRect(); if (!r.width) return;
+        const vb = svg.viewBox.baseVal, sc = r.width / vb.width, c = g.getBBox(), ex = r.left + (c.x + c.width / 2 - vb.x) * sc, ey = r.top + (c.y + c.height / 2 - vb.y) * sc;
+        let dx = 0, dy = 0; if (tx != null) { const vx = tx - ex, vy = ty - ey, d = Math.hypot(vx, vy) || 1, m = Math.min(4.2, d / 40); dx = vx / d * m; dy = vy / d * m; }
+        g.setAttribute("transform", `translate(${dx.toFixed(2)} ${dy.toFixed(2)})`); }); };
+    const aim = (x, y) => { tx = x; ty = y; if (!raf) raf = requestAnimationFrame(look); };
+    if (!still) {
+      addEventListener("pointermove", (e) => aim(e.clientX, e.clientY), { passive: true });
+      document.addEventListener("focusin", (e) => { const t = e.target; if (t && t.getBoundingClientRect && t !== b) { const r = t.getBoundingClientRect(); aim(r.left + r.width / 2, r.top + r.height / 2); } });
+      document.addEventListener("mouseleave", () => { tx = ty = null; if (!raf) raf = requestAnimationFrame(look); });
+      // touch screens have no cursor: glance around now and then
+      if (matchMedia("(hover: none)").matches) setInterval(() => { if (document.hidden) return; const r = Math.random(); r < .5 ? aim(Math.random() * innerWidth, Math.random() * innerHeight * .8) : (tx = ty = null, look()); }, 3500);
+    }
+    const blink = () => { b.classList.remove("blink"); void b.offsetWidth; b.classList.add("blink"); setTimeout(() => b.classList.remove("blink"), 220); };
+    (function loop() { setTimeout(() => { if (!document.hidden) { blink(); if (Math.random() < .25) setTimeout(blink, 320); } loop(); }, (still ? 6000 : 2200) + Math.random() * 3800); })();
+    b.addEventListener("mouseenter", () => setTimeout(blink, 120));
+    sync();
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
+})();

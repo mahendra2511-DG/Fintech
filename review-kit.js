@@ -604,7 +604,7 @@
       } else R.aiError = "AI review is not switched on for this site yet";
       const prev = R.review ? hist.all().find(h => h.kind === R.kind && h.review) : null;
       if (prev) R.prev = { overall: prev.review.overall, categories: prev.review.categories.map(c => ({ id: c.id, score: c.score })) };
-      if (R.review) { const a = hist.all(); a.unshift(slim(R)); hist.save(a); step(4); wirePage = 0; await makeWire(R, false); }
+      if (R.review) { const a = hist.all(); a.unshift(slim(R)); hist.save(a); try { window.dispatchEvent(new Event("hub-progress")); } catch (e) {} step(4); wirePage = 0; await makeWire(R, false); }
       state.result = R; step(5);
     } catch (e) { state.error = e.message || String(e); }
     state.busy = false; render();

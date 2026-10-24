@@ -1,4 +1,4 @@
-/* "Ask Mahendra" AI layer for the chat widget.
+/* "Ask Dexa" AI layer for the chat widget.
    When /api/ask is live (GROQ_API_KEY set in Vercel), typed questions get an AI answer grounded in this site's own
    text. Otherwise (file mode, no key, limit reached, error) the site's built-in search answers exactly as before. */
 (function () {

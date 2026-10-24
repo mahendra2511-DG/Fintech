@@ -61,6 +61,7 @@
       <div class="nav-group-label">Dashboards</div>
       <button data-view="dashboards"><span class="ic">🖼️</span><span class="lbl">Dashboard Gallery</span></button>
       <button data-view="review"><span class="ic">🧪</span><span class="lbl">Mahendra Dashboard Evaluation Feedback</span><span class="nav-ai">AI</span></button>
+      <button data-view="coach"><span class="ic">🦉</span><span class="lbl">Dexa Coach</span><span class="nav-ai">AI</span></button>
 
       <div class="nav-group-label">QA</div>
       <button data-view="qa"><span class="ic">🧪</span><span class="lbl">QA &amp; Reconciliation</span></button>
@@ -361,6 +362,10 @@
 <!-- ===================== MY PROGRESS ===================== -->
 <section class="view" id="view-review">
   <div class="wrap"><div id="rv-root"></div></div>
+</section>
+
+<section class="view" id="view-coach">
+  <div class="wrap"><div id="coach-root"></div></div>
 </section>
 
 <section class="view" id="view-progress">
@@ -1031,24 +1036,24 @@
 
 <!-- ===================== ASK Mahendra ===================== -->
 <div class="chat-fab-wrap">
-  <div class="chat-fab-label" id="chat-fab-label">Ask Mahendra</div>
-  <button class="chat-fab" id="chat-fab" aria-label="Ask Mahendra"><img src="assets/mahendra-avatar.png" alt="Mahendra Singh" class="chat-fab-avatar"></button>
+  <div class="chat-fab-label" id="chat-fab-label">Ask Dexa</div>
+  <button class="chat-fab" id="chat-fab" aria-label="Ask Dexa"><img src="assets/dexa-avatar.svg" alt="Dexa the owl" class="chat-fab-avatar"></button>
 </div>
 <div class="chat-panel" id="chat-panel">
   <div class="chat-panel-head">
-    <img src="assets/mahendra-avatar.png" alt="Mahendra Singh" class="chat-panel-avatar">
+    <img src="assets/dexa-avatar.svg" alt="Dexa the owl" class="chat-panel-avatar">
     <div>
-      <div class="chat-panel-title">Ask Mahendra</div>
+      <div class="chat-panel-title">Ask Dexa</div>
       <div class="chat-panel-sub">Searches the KPIs, SQL, interview prep, data model &amp; glossary on this site</div>
     </div>
     <button class="chat-panel-close" id="chat-panel-close" aria-label="Close chat">✕</button>
   </div>
   <div class="chat-panel-body" id="chat-panel-body">
-    <div class="chat-msg bot"><div class="chat-bubble">Hi, I'm Mahendra's assistant 👋 Ask me anything about this project: a KPI, a table, a formula, or an interview question. e.g. <em>"attempts vs intents"</em> or <em>"suspected vs confirmed fraud"</em>.</div></div>
+    <div class="chat-msg bot"><div class="chat-bubble">Hi, I'm Dexa 🦉, your project assistant. Ask me anything about this project: a KPI, a table, a formula, or an interview question. e.g. <em>"attempts vs intents"</em> or <em>"suspected vs confirmed fraud"</em>.</div></div>
   </div>
   <div class="chat-quick-replies" id="chat-quick-replies"></div>
   <form class="chat-panel-input" id="chat-panel-form">
-    <input type="text" id="chat-input" placeholder="Ask Mahendra a question…" autocomplete="off">
+    <input type="text" id="chat-input" placeholder="Ask Dexa a question…" autocomplete="off">
     <button type="submit" aria-label="Send">➤</button>
   </form>
 </div>
@@ -1077,11 +1082,13 @@
 <script src="pf-data.js?v=20261022-pf"></script>
 <script>document.write('<script src="schedule-config.js?t=' + Date.now() + '"><\/script>');</script>
 <script>document.write('<script src="project-schedule.js?t=' + Date.now() + '"><\/script>');</script>
-<script src="app.js?v=20261022-q"></script>
-<script src="ai-kit.js?v=20261015-ai2" defer></script>
+<script src="app.js?v=20261022-r"></script>
+<script src="ai-kit.js?v=20261023-dexa3" defer></script>
 <script src="review-config.js?v=20261018-rv"></script>
-<script src="review-kit.js?v=20261018-wf" defer></script>
+<script src="review-kit.js?v=20261024-acc" defer></script>
+<script src="dexa-kit.js?v=20261023-dexa3" defer></script>
 <script>window.VISIT_KEY = "payflow";</script>
-<script src="visit-kit.js?v=20261022-q"></script>
+<script src="visit-kit.js?v=20261024-acc"></script>
+<script src="coach-kit.js?v=20261024-acc" defer></script>
 </body>
 </html>

@@ -51,6 +51,26 @@
   .vk-yes{color:#15803D;font-weight:700} .vk-no{color:#9CA3AF} .vk-pages{font-size:11.5px;color:var(--ink-muted,#666)}
   .vk-wrap{overflow-x:auto}
   .vk-btile{cursor:pointer} .vk-btile.on{border-color:#1F9E8B;background:rgba(31,158,139,.08)}
+  .vk-modal{max-height:calc(100vh - 32px);overflow-y:auto;position:relative}
+  .vk-modal .vk-tabs{display:flex;gap:4px;background:var(--paper,#f3f4f6);border-radius:12px;padding:4px;margin:0 0 16px}
+  .vk-modal .vk-tabs button{margin:0;flex:1;width:auto;padding:9px 10px;border-radius:9px;background:transparent;color:var(--ink-muted,#5f6368);font-size:14px;font-weight:700}
+  .vk-modal .vk-tabs button.on{background:var(--paper-raised,#fff);color:var(--ink,#111);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  .vk-modal .vk-light{font-weight:400;color:var(--ink-muted,#888)} .vk-modal .vk-hint{font-size:12px;margin-top:5px}
+  .vk-modal .vk-pw{position:relative} .vk-modal .vk-pw input{padding-right:44px}
+  .vk-modal .vk-pw .vk-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);margin:0;width:34px;height:34px;padding:0;background:transparent;color:inherit;font-size:16px;border-radius:8px}
+  .vk-modal .vk-row{display:flex;justify-content:flex-end;margin-top:8px;font-size:13px}
+  .vk-modal a{color:#137A6A;font-weight:600}
+  .vk-modal .vk-x{position:absolute;right:12px;top:12px;margin:0;width:34px;height:34px;padding:0;background:transparent;color:var(--ink-muted,#666);font-size:16px}
+  .vk-modal .vk-sec{background:transparent;color:#B91C1C;border:1px solid #FCA5A5;margin-top:10px}
+  .vk-acc{margin:8px 0 24px;padding:20px;border:2px dashed #C4B5FD!important}
+  .vk-acc .vk-cert{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin:12px 0 18px}
+  .vk-acc .vk-cc{border:1px solid var(--line,#e6e6e2);border-radius:12px;padding:12px 14px;background:var(--paper,#fafafa);font-size:13px}
+  .vk-acc .vk-cc b{font-size:15px} .vk-acc .vk-cc .st{margin:4px 0 10px;color:var(--ink-muted,#666)} .vk-acc .vk-cc .st.ok{color:#15803D;font-weight:600}
+  .vk-acc .vk-cc button{width:100%;padding:9px;border-radius:9px;border:0;background:#5B21B6;color:#fff;font-weight:700;cursor:pointer;font-size:13.5px}
+  .vk-acc .vk-cc button[disabled]{background:#CBD5E1;color:#475569;cursor:not-allowed}
+  .vk-acc .vk-mini{padding:4px 9px;border-radius:7px;border:1px solid var(--line,#ddd);background:var(--paper-raised,#fff);color:var(--ink,#111);cursor:pointer;font-size:12px}
+  .vk-acc .vk-note{font-size:13px;padding:10px 12px;border-radius:9px;margin:8px 0;background:#F5F3FF;border:1px solid #DDD6FE}
+  .vk-acc .vk-note.err{background:#FEF2F2;border-color:#FECACA;color:#991B1B}
   `;
   const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
 
@@ -63,90 +83,206 @@
   function findProject(projects, code) { const c = normCode(code); return projects.find(p => normCode(p.code) === c) || null; }
 
   window.addEventListener("hub-trainer", () => setTimeout(() => { try { trainerWatch(); } catch (e) {} }, 100));
-  /* ---------- check-in modal ---------- */
-  /* ---------- one-time login: mobile number → saved profile (any device), else first-time details ---------- */
-  // cb(name, group, code) is called once the student is identified. `current` = profile being edited (from "change").
-  function askName(projects, cb, current, notice) {
-    const ov = document.createElement("div"); ov.className = "vk-overlay";
-    const many = projects.length > 0;
-    document.body.appendChild(ov);
-    const $ = (id) => ov.querySelector("#" + id);
-    const close = () => ov.remove();
-    const trainerLink = `<a href="#" id="vk-trainer">I'm the trainer →</a>`;
-    const bindTrainer = () => { const t = $("vk-trainer"); if (t) t.addEventListener("click", (e) => { e.preventDefault(); close(); try { sessionStorage.setItem(KEY + "_trainer_skip", "1"); } catch (x) {}
-      try { if (typeof window.switchView === "function") window.switchView("schedule"); } catch (x) {} setTimeout(() => { if (typeof window.schTrainerLogin === "function") window.schTrainerLogin(); else { const b = document.getElementById("sch-unlock"); if (b) b.click(); } }, 300); }); };
-    const done = (id, prof) => { profile.uid = id.uid; profile.last4 = id.last4; profile.mobile = id.mobile; close(); cb(prof.name, prof.group, prof.batch); };
-    // ---- step 1: mobile number
-    function stepMobile() {
-      ov.innerHTML = `<div class="vk-modal" role="dialog" aria-modal="true" aria-labelledby="vk-t">
-        <h3 id="vk-t">👋 Welcome! Log in once</h3>
-        <p>Enter your mobile number. First time? We'll ask your name, project code and group once. Already registered on another phone or laptop? Your details come back automatically.</p>
-        <label for="vk-mob">Mobile number</label><input id="vk-mob" type="tel" inputmode="numeric" maxlength="14" autocomplete="tel" placeholder="10-digit mobile number" value="${esc(current && current.mobile || "")}">
-        <div class="vk-err" id="vk-err"></div>
-        <button id="vk-go">Continue →</button>
-        <small>Your number is only used as your login id: the site keeps a coded id and the last 4 digits, never the full number. ${trainerLink}</small></div>`;
-      bindTrainer(); const inp = $("vk-mob"); setTimeout(() => inp.focus(), 50);
-      const go = () => {
-        const mob = inp.value.replace(/\D/g, "").replace(/^(?:91|0)(?=\d{10}$)/, "");
-        if (!/^[6-9]\d{9}$/.test(mob)) { $("vk-err").textContent = "Please enter a valid 10-digit mobile number."; return; }
-        $("vk-go").disabled = true; $("vk-go").textContent = "Checking…";
-        post({ action: "lookup", mobile: mob }).then(j => {
-          if (!j || !j.ok) throw new Error(j && j.error || "error");
-          const id = { uid: j.uid, last4: j.last4, mobile: mob };
-          const pr = j.profile;
-          if (pr && (!many || findProject(projects, pr.batch))) { const p = findProject(projects, pr.batch); return done(id, { name: pr.name, group: pr.group, batch: p ? p.code : pr.batch }); }
-          stepDetails(id, pr || current, pr ? "Your saved project code is no longer active. Please pick your current project code." : "");
-        }).catch(() => { $("vk-go").disabled = false; $("vk-go").textContent = "Continue →"; $("vk-err").textContent = "Could not reach the server. Check your internet and try again."; });
+  /* ---------- accounts: create account / log in / forgot password / mandatory group ---------- */
+  const NOG = "";                                    // group not assigned yet
+  const todayIST = () => new Date(Date.now() + 330 * 60000).toISOString().slice(0, 10);
+  const kickOf = (p) => String((p && ((p.overrides && p.overrides.kickoff) || p.kickoff)) || "").slice(0, 10);
+  const groupRequired = (p) => !!(p && kickOf(p) && todayIST() > kickOf(p));
+  const siteName = () => document.title.split(/\s[—|-]\s/)[0].trim();
+  function trainerJump(close) { close(); try { sessionStorage.setItem(KEY + "_trainer_skip", "1"); } catch (x) {}
+    try { if (typeof window.switchView === "function") window.switchView("schedule"); } catch (x) {} setTimeout(() => { if (typeof window.schTrainerLogin === "function") window.schTrainerLogin(); else { const b = document.getElementById("sch-unlock"); if (b) b.click(); } }, 300); }
+  function codeSelect(projects, cur) {
+    return projects.length
+      ? `<select id="vk-code"><option value="">Select your project code…</option>${projects.map(p => `<option value="${esc(p.code)}" ${cur && normCode(cur) === normCode(p.code) ? "selected" : ""}>${esc(p.code)}${p.time ? ` · ${esc(DAYS[p.presDay] ? DAYS[p.presDay].slice(0, 3) + " " : "")}${esc(p.time)}` : ""}</option>`).join("")}</select>`
+      : `<input id="vk-code" type="text" maxlength="20" placeholder="e.g. P1426" value="${esc(cur || "")}" style="text-transform:uppercase">`;
+  }
+  // group list for the chosen code; "Group not assigned yet" is offered only until the day after kick-off
+  function groupField(ov, projects, keep) {
+    const $ = (id) => ov.querySelector("#" + id); const p = findProject(projects, $("vk-code") ? $("vk-code").value : "");
+    const groups = (p ? p.groups || [] : []).map(g => g.name).filter(Boolean); const req = groupRequired(p);
+    const prev = $("vk-group") ? $("vk-group").value : keep || "";
+    $("vk-gwrap").innerHTML = groups.length
+      ? `<select id="vk-group">${req ? `<option value="__pick">Select your group…</option>` : `<option value="">Group not assigned yet</option>`}${groups.map(g => `<option ${prev === g ? "selected" : ""}>${esc(g)}</option>`).join("")}</select>`
+      : `<input id="vk-group" type="text" maxlength="40" placeholder="${projects.length && !p ? "Select your project code first" : req ? "e.g. Group 3 (required)" : "e.g. Group 3, or leave empty if not assigned yet"}" value="${esc(prev)}" ${projects.length && !p ? "disabled" : ""}>`;
+    const hint = $("vk-ghint"); if (hint) hint.textContent = req ? "Your project has started, so your group is required." : "Not in a group yet? Keep 'Group not assigned yet'. You'll pick it after the first meeting.";
+  }
+  const readGroup = (ov) => { const g = ov.querySelector("#vk-group"); const v = g ? g.value.replace(/\s+/g, " ").trim() : ""; return v === "__pick" ? null : v; };
+  const pwField = (id, ph, ac) => `<div class="vk-pw"><input id="${id}" type="password" maxlength="72" autocomplete="${ac}" placeholder="${ph}"><button type="button" class="vk-eye" data-eye="${id}" aria-label="Show password">👁</button></div>`;
+  function modal(dismissible) {
+    const ov = document.createElement("div"); ov.className = "vk-overlay"; document.body.appendChild(ov);
+    const close = () => { ov.remove(); document.removeEventListener("keydown", esc_); };
+    const esc_ = (e) => { if (e.key === "Escape" && dismissible) close(); };
+    document.addEventListener("keydown", esc_);
+    if (dismissible) ov.addEventListener("click", (e) => { if (e.target === ov) close(); });
+    return { ov, close, $: (id) => ov.querySelector("#" + id) };
+  }
+  function wire(M, onSubmit) {
+    M.ov.querySelectorAll("[data-eye]").forEach(b => b.addEventListener("click", () => { const i = M.$(b.dataset.eye); i.type = i.type === "password" ? "text" : "password"; b.setAttribute("aria-label", i.type === "password" ? "Show password" : "Hide password"); }));
+    const t = M.$("vk-trainer"); if (t) t.addEventListener("click", (e) => { e.preventDefault(); trainerJump(M.close); });
+    const go = M.$("vk-go"); if (go) go.addEventListener("click", onSubmit);
+    M.ov.querySelectorAll("input").forEach(i => i.addEventListener("keydown", (e) => { if (e.key === "Enter" && go && !go.disabled) onSubmit(); }));
+  }
+  const busy = (M, on, label) => { const b = M.$("vk-go"); if (!b) return; b.disabled = on; if (label) b.textContent = label; };
+  const errOut = (M, t) => { const e = M.$("vk-err"); if (e) e.textContent = t || ""; };
+  // mode: "signup" | "login" | "forgot" ; onDone(profileFromServer, token)
+  function authModal(projects, mode, onDone, opts) {
+    opts = opts || {}; const M = modal(false);
+    const trainer = `<a href="#" id="vk-trainer">I'm the trainer →</a>`;
+    const tabs = (on) => `<div class="vk-tabs" role="tablist"><button type="button" role="tab" data-mode="signup" class="${on === "signup" ? "on" : ""}">Create account</button><button type="button" role="tab" data-mode="login" class="${on === "login" ? "on" : ""}">Log in</button></div>`;
+    const swap = (m) => { M.close(); authModal(projects, m, onDone, Object.assign({}, opts, { note: "" })); };
+    const bindTabs = () => M.ov.querySelectorAll("[data-mode]").forEach(b => b.addEventListener("click", () => { if (b.dataset.mode !== mode) swap(b.dataset.mode); }));
+    const ok = (j) => { M.close(); onDone(j.profile, j.token); };
+    if (mode === "signup") {
+      const c = opts.prefill || {};
+      M.ov.innerHTML = `<div class="vk-modal" role="dialog" aria-modal="true" aria-labelledby="vk-t">${tabs("signup")}
+        <h3 id="vk-t">${c.name ? "Set your password" : "Enroll in this project"}</h3>
+        <p>${opts.note ? `<b>${esc(opts.note)}</b> ` : ""}${c.name ? "Your saved details are filled in. Add your email and a password so you can log in on any device and get your certificate." : "Create your account once. You'll use it to log in on any device, and your certificate is sent to this email."}</p>
+        <label for="vk-name">Full name <span class="vk-light">(as it should appear on your certificate)</span></label><input id="vk-name" type="text" maxlength="48" autocomplete="name" placeholder="e.g. Ajay Sharma" value="${esc(c.name || "")}">
+        <label for="vk-email">Email</label><input id="vk-email" type="email" maxlength="254" autocomplete="email" placeholder="you@example.com" value="${esc(c.email || "")}">
+        <label for="vk-mob">Mobile number</label><input id="vk-mob" type="tel" inputmode="numeric" maxlength="14" autocomplete="tel" placeholder="10-digit mobile number" value="${esc(c.mobile || "")}">
+        <label for="vk-pass">Password <span class="vk-light">(at least 6 characters)</span></label>${pwField("vk-pass", "Create a password", "new-password")}
+        <label for="vk-code">Project code <span class="vk-light">(given by your trainer, e.g. P1426)</span></label>${codeSelect(projects, c.batch || (projects.length === 1 ? projects[0].code : ""))}
+        <label for="vk-group">Your group</label><div id="vk-gwrap"></div><div class="vk-light vk-hint" id="vk-ghint"></div>
+        <div class="vk-err" id="vk-err" role="alert"></div>
+        <button id="vk-go">Create account →</button>
+        <small>Already enrolled? <a href="#" data-mode2="login">Log in</a> · Only your trainer sees your details; the full mobile number is never stored. ${trainer}</small></div>`;
+      groupField(M.ov, projects, c.group || ""); M.$("vk-code").addEventListener(projects.length ? "change" : "input", () => groupField(M.ov, projects, ""));
+      setTimeout(() => (c.name ? M.$("vk-email") : M.$("vk-name")).focus(), 50);
+      wire(M, () => {
+        const n = M.$("vk-name").value.replace(/\s+/g, " ").trim(); const nn = n === n.toLowerCase() || n === n.toUpperCase() ? n.toLowerCase().replace(/(^|\s)\S/g, (x) => x.toUpperCase()) : n;
+        const email = M.$("vk-email").value.trim(), mob = M.$("vk-mob").value.replace(/\D/g, "").replace(/^(?:91|0)(?=\d{10}$)/, ""), pw = M.$("vk-pass").value;
+        const codeRaw = M.$("vk-code").value.trim(), p = findProject(projects, codeRaw), g = readGroup(M.ov);
+        if (n.length < 2 || !/[a-zA-Zऀ-ॿ]/.test(n)) return errOut(M, "Please enter your full name.");
+        if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)) return errOut(M, "Please enter a valid email address.");
+        if (!/^[6-9]\d{9}$/.test(mob)) return errOut(M, "Please enter a valid 10-digit mobile number.");
+        if (pw.length < 6) return errOut(M, "Password must be at least 6 characters.");
+        if (projects.length && !p) return errOut(M, "Please select your project code.");
+        if (!projects.length && !/^[A-Za-z0-9-]{2,20}$/.test(codeRaw)) return errOut(M, "Please enter your project code, like P1426.");
+        if (g === null || (!g && groupRequired(p))) return errOut(M, "Your project has started, so please select your group.");
+        errOut(M, ""); busy(M, true, "Creating your account…");
+        post({ action: "signup", name: nn, email, mobile: mob, password: pw, batch: p ? p.code : normCode(codeRaw), group: g }).then(j => {
+          if (!j || !j.ok) { busy(M, false, "Create account →"); return errOut(M, (j && j.error) || "Could not create the account. Try again."); }
+          profile.mobile = mob; ok(j);
+        }).catch(() => { busy(M, false, "Create account →"); errOut(M, "Could not reach the server. Check your internet and try again."); });
+      });
+    } else if (mode === "login") {
+      M.ov.innerHTML = `<div class="vk-modal" role="dialog" aria-modal="true" aria-labelledby="vk-t">${tabs("login")}
+        <h3 id="vk-t">Welcome back 👋</h3><p>${opts.note ? `<b>${esc(opts.note)}</b> ` : ""}Log in with your email or mobile number.</p>
+        <label for="vk-login">Email or mobile number</label><input id="vk-login" type="text" maxlength="254" autocomplete="username" placeholder="you@example.com or 98xxxxxxxx" value="${esc(opts.login || "")}">
+        <label for="vk-pass">Password</label>${pwField("vk-pass", "Your password", "current-password")}
+        <div class="vk-row"><a href="#" id="vk-forgot">Forgot password?</a></div>
+        <div class="vk-err" id="vk-err" role="alert"></div>
+        <button id="vk-go">Log in →</button>
+        <small>New here? <a href="#" data-mode2="signup">Create an account</a>. ${trainer}</small></div>`;
+      setTimeout(() => M.$("vk-login").focus(), 50);
+      M.$("vk-forgot").addEventListener("click", (e) => { e.preventDefault(); M.close(); authModal(projects, "forgot", onDone, { email: M.$("vk-login").value.includes("@") ? M.$("vk-login").value.trim() : "" }); });
+      wire(M, () => {
+        const id = M.$("vk-login").value.trim(), pw = M.$("vk-pass").value;
+        if (!id || !pw) return errOut(M, "Enter your email or mobile number and your password.");
+        errOut(M, ""); busy(M, true, "Logging in…");
+        post({ action: "login", login: id, password: pw }).then(j => {
+          if (!j || !j.ok) { busy(M, false, "Log in →"); if (j && j.legacy) { M.close(); return authModal(projects, "signup", onDone, { prefill: Object.assign({}, profile, { mobile: id.replace(/\D/g, "").slice(-10) }), note: j.error }); } return errOut(M, (j && j.error) || "Could not log in."); }
+          if (!id.includes("@")) profile.mobile = id.replace(/\D/g, "").slice(-10);
+          ok(j);
+        }).catch(() => { busy(M, false, "Log in →"); errOut(M, "Could not reach the server. Check your internet and try again."); });
+      });
+    } else {                                     // forgot → code → new password
+      let sent = false, email = opts.email || "";
+      const draw = (msg) => {
+        M.ov.innerHTML = `<div class="vk-modal" role="dialog" aria-modal="true" aria-labelledby="vk-t">
+          <h3 id="vk-t">Reset your password</h3>
+          <p>${sent ? esc(msg || "We sent a 6-digit code to your email. Enter it with your new password.") : "Enter the email you enrolled with. We'll email you a 6-digit code."}</p>
+          <label for="vk-email">Email</label><input id="vk-email" type="email" maxlength="254" autocomplete="email" value="${esc(email)}" ${sent ? "readonly" : ""}>
+          ${sent ? `<label for="vk-code6">6-digit code</label><input id="vk-code6" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456">
+          <label for="vk-pass">New password</label>${pwField("vk-pass", "At least 6 characters", "new-password")}` : ""}
+          <div class="vk-err" id="vk-err" role="alert"></div>
+          <button id="vk-go">${sent ? "Reset password & log in →" : "Send code →"}</button>
+          <small>${sent ? `<a href="#" id="vk-resend">Send a new code</a> · ` : ""}<a href="#" data-mode2="login">Back to log in</a> · No email? Your trainer can reset your password.</small></div>`;
+        bindMode2();
+        setTimeout(() => (sent ? M.$("vk-code6") : M.$("vk-email")).focus(), 50);
+        const rs = M.$("vk-resend"); if (rs) rs.addEventListener("click", (e) => { e.preventDefault(); sent = false; draw(); });
+        wire(M, () => {
+          email = M.$("vk-email").value.trim();
+          if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)) return errOut(M, "Please enter a valid email address.");
+          if (!sent) { busy(M, true, "Sending…");
+            return post({ action: "forgot", email, site: siteName() }).then(j => { if (!j || !j.ok) { busy(M, false, "Send code →"); return errOut(M, (j && j.error) || "Could not send the code."); } sent = true; draw(j.message); })
+              .catch(() => { busy(M, false, "Send code →"); errOut(M, "Could not reach the server."); }); }
+          const code = M.$("vk-code6").value.replace(/\D/g, ""), pw = M.$("vk-pass").value;
+          if (code.length !== 6) return errOut(M, "Enter the 6-digit code from the email."); if (pw.length < 6) return errOut(M, "Password must be at least 6 characters.");
+          busy(M, true, "Resetting…");
+          post({ action: "reset", email, code, password: pw }).then(j => { if (!j || !j.ok) { busy(M, false, "Reset password & log in →"); return errOut(M, (j && j.error) || "Could not reset the password."); } ok(j); })
+            .catch(() => { busy(M, false, "Reset password & log in →"); errOut(M, "Could not reach the server."); });
+        });
       };
-      $("vk-go").addEventListener("click", go); inp.addEventListener("keydown", (e) => { if (e.key === "Enter") go(); });
+      draw();
     }
-    // ---- step 2: first-time details (or editing)
-    function stepDetails(id, cur, note) {
-      const curP = (cur && findProject(projects, cur.batch)) || (projects.length === 1 ? projects[0] : null);
-      const codeField = many
-        ? `<select id="vk-code"><option value="">Select your project code…</option>${projects.map(p => `<option value="${esc(p.code)}" ${curP && curP.code === p.code ? "selected" : ""}>${esc(p.code)}${p.time ? ` · ${esc(DAYS[p.presDay] ? DAYS[p.presDay].slice(0, 3) + " " : "")}${esc(p.time)}` : ""}</option>`).join("")}</select>`
-        : `<input id="vk-code" type="text" maxlength="20" placeholder="e.g. P1426" value="${esc(cur && cur.batch || "")}" style="text-transform:uppercase">`;
-      ov.innerHTML = `<div class="vk-modal" role="dialog" aria-modal="true" aria-labelledby="vk-t">
-        <h3 id="vk-t">${cur && cur.name ? "Update your details" : "First time here? Tell us who you are"}</h3>
-        <p>${note ? `<b>${esc(note)}</b> ` : ""}You fill this only once. After this, the site remembers you on this device, and on any other device after you enter your mobile number.</p>
-        <label for="vk-name">Your full name</label><input id="vk-name" type="text" maxlength="48" autocomplete="name" placeholder="e.g. Ajay Sharma" value="${esc(cur && cur.name || "")}">
-        <label for="vk-code">Project code <span style="font-weight:400">(given by your trainer, e.g. P1426)</span></label>${codeField}
-        <label for="vk-group">Your group</label><div id="vk-gwrap"></div>
-        <div class="vk-err" id="vk-err"></div>
-        <button id="vk-go">Save & continue →</button>
-        <small>Mobile ending ${esc(id.last4 || "")} · only your trainer can see your name. ${trainerLink}</small></div>`;
-      bindTrainer();
-      const fillGroups = () => {
-        const p = findProject(projects, $("vk-code").value);
-        const groups = (p ? p.groups || [] : []).map(g => g.name).filter(Boolean);
-        const prev = $("vk-group") ? $("vk-group").value : "";
-        const keep = prev || (cur && cur.group) || "";
-        $("vk-gwrap").innerHTML = groups.length
-          ? `<select id="vk-group"><option value="">Select your group…</option>${groups.map(g => `<option ${keep === g ? "selected" : ""}>${esc(g)}</option>`).join("")}</select>`
-          : `<input id="vk-group" type="text" maxlength="40" placeholder="${many && !p ? "Select your project code first" : "e.g. Group 3"}" value="${esc(keep === "Not in a group yet" ? "" : keep)}" ${many && !p ? "disabled" : ""}>`;
-      };
-      fillGroups(); $("vk-code").addEventListener(many ? "change" : "input", fillGroups);
-      const inp = $("vk-name"); setTimeout(() => (cur && cur.name ? $("vk-code") : inp).focus(), 50);
-      const go = () => {
-        const err = (t) => { $("vk-err").textContent = t; };
-        const n = inp.value.replace(/\s+/g, " ").trim();
-        const nn = n === n.toLowerCase() || n === n.toUpperCase() ? n.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase()) : n;
-        if (n.length < 2 || !/[a-zA-Zऀ-ॿ]/.test(n)) return err("Please enter your real name (at least 2 letters).");
-        const codeRaw = $("vk-code").value.trim(); const p = findProject(projects, codeRaw);
-        if (many && !p) return err("Please select your project code.");
-        if (!many && !/^[A-Za-z0-9-]{2,20}$/.test(codeRaw)) return err("Please enter your project code, like P1426.");
-        const g = $("vk-group").value.replace(/\s+/g, " ").trim(); if (!g || g === "Not in a group yet") return err("Please select your group. Group is required.");
-        const code = p ? p.code : normCode(codeRaw);
-        $("vk-go").disabled = true; $("vk-go").textContent = "Saving…";
-        post({ action: "register", mobile: id.mobile, name: nn, group: g, batch: code }).then(j => {
-          if (!j || !j.ok) { $("vk-go").disabled = false; $("vk-go").textContent = "Save & continue →"; return err((j && j.error) || "Could not save. Try again."); }
-          done({ uid: j.uid, last4: j.last4, mobile: id.mobile }, { name: nn, group: g, batch: code });
-        }).catch(() => { $("vk-go").disabled = false; $("vk-go").textContent = "Save & continue →"; err("Could not reach the server. Check your internet and try again."); });
-      };
-      $("vk-go").addEventListener("click", go); inp.addEventListener("keydown", (e) => { if (e.key === "Enter") go(); });
-    }
-    if (current && current.mobile && current.uid) stepDetails({ uid: current.uid, last4: current.last4, mobile: current.mobile }, current, notice || "");
-    else stepMobile();
+    function bindMode2() { M.ov.querySelectorAll("[data-mode2]").forEach(a => a.addEventListener("click", (e) => { e.preventDefault(); swap(a.dataset.mode2); })); }
+    bindTabs(); bindMode2();
+  }
+  // after the first meeting a student without a group must pick one (also used when the project code was removed)
+  function groupModal(projects, onDone, note) {
+    const M = modal(false);
+    M.ov.innerHTML = `<div class="vk-modal" role="dialog" aria-modal="true" aria-labelledby="vk-t">
+      <h3 id="vk-t">Select your group</h3><p><b>${esc(note || "Your project has started 🎉")}</b> Please choose your project code and group to continue.</p>
+      <label for="vk-code">Project code</label>${codeSelect(projects, profile.batch)}
+      <label for="vk-group">Your group</label><div id="vk-gwrap"></div><div class="vk-light vk-hint" id="vk-ghint"></div>
+      <div class="vk-err" id="vk-err" role="alert"></div><button id="vk-go">Save & continue →</button>
+      <small>Logged in as ${esc(profile.name || "")}${profile.email ? " · " + esc(profile.email) : ""} · <a href="#" id="vk-out">Log out</a></small></div>`;
+    groupField(M.ov, projects, profile.group); M.$("vk-code").addEventListener(projects.length ? "change" : "input", () => groupField(M.ov, projects, ""));
+    M.$("vk-out").addEventListener("click", (e) => { e.preventDefault(); M.close(); logout(projects); });
+    wire(M, () => {
+      const p = findProject(projects, M.$("vk-code").value), g = readGroup(M.ov);
+      if (projects.length && !p) return errOut(M, "Please select your project code.");
+      if (g === null || (!g && groupRequired(p))) return errOut(M, "Please select your group.");
+      busy(M, true, "Saving…");
+      post({ action: "update", token: profile.token, batch: p ? p.code : M.$("vk-code").value, group: g }).then(j => {
+        if (j && j.relogin) { M.close(); return authModal(projects, "login", onDone, { note: "Please log in again." }); }
+        if (!j || !j.ok) { busy(M, false, "Save & continue →"); return errOut(M, (j && j.error) || "Could not save."); }
+        M.close(); onDone(j.profile);
+      }).catch(() => { busy(M, false, "Save & continue →"); errOut(M, "Could not reach the server."); });
+    });
+  }
+  function accountModal(projects) {
+    const M = modal(true);
+    M.ov.innerHTML = `<div class="vk-modal" role="dialog" aria-modal="true" aria-labelledby="vk-t"><button type="button" class="vk-x" id="vk-x" aria-label="Close">✕</button>
+      <h3 id="vk-t">Your account</h3><p>${esc(profile.email || "")}${profile.last4 ? ` · 📱 ••${esc(profile.last4)}` : ""}</p>
+      <label for="vk-name">Full name <span class="vk-light">(shown on your certificate)</span></label><input id="vk-name" type="text" maxlength="48" value="${esc(profile.name || "")}">
+      <label for="vk-code">Project code</label>${codeSelect(projects, profile.batch)}
+      <label for="vk-group">Your group</label><div id="vk-gwrap"></div><div class="vk-light vk-hint" id="vk-ghint"></div>
+      <div class="vk-err" id="vk-err" role="alert"></div><button id="vk-go">Save changes</button>
+      <button type="button" class="vk-sec" id="vk-out">Log out</button></div>`;
+    groupField(M.ov, projects, profile.group); M.$("vk-code").addEventListener(projects.length ? "change" : "input", () => groupField(M.ov, projects, ""));
+    M.$("vk-x").addEventListener("click", M.close);
+    M.$("vk-out").addEventListener("click", () => { M.close(); logout(projects); });
+    wire(M, () => {
+      const p = findProject(projects, M.$("vk-code").value), g = readGroup(M.ov), name = M.$("vk-name").value.replace(/\s+/g, " ").trim();
+      if (name.length < 2) return errOut(M, "Please enter your full name.");
+      if (projects.length && !p) return errOut(M, "Please select your project code.");
+      if (g === null || (!g && groupRequired(p))) return errOut(M, "Please select your group.");
+      busy(M, true, "Saving…");
+      post({ action: "update", token: profile.token, name, batch: p ? p.code : M.$("vk-code").value, group: g }).then(j => {
+        if (!j || !j.ok) { busy(M, false, "Save changes"); return errOut(M, (j && j.error) || "Could not save."); }
+        M.close(); applyProfile(j.profile); renderChip(profile, projects); ping(curView(), true); lastPush = ""; progressSync();
+      }).catch(() => { busy(M, false, "Save changes"); errOut(M, "Could not reach the server."); });
+    });
+  }
+  function applyProfile(pr, token) {
+    if (!pr) return; Object.assign(profile, { name: pr.name, email: pr.email, uid: pr.uid, last4: pr.last4, group: pr.group || NOG, cert: pr.cert || null, kickoff: pr.kickoff || "", meAt: Date.now() });
+    if (token) profile.token = token; setBatch(profile, pr.batch); saveMe(profile);
+    try { window.dispatchEvent(new Event("vk-account")); } catch (e) {}
+  }
+  function logout(projects) {
+    const t = profile.token; if (t) post({ action: "logout", token: t }).catch(() => {});
+    const vid = profile.vid; Object.keys(profile).forEach(k => delete profile[k]); profile.vid = vid; saveMe(profile);
+    const chip = document.getElementById("vk-chip"); if (chip) chip.remove();
+    authModal(projects, "login", (pr, tok) => { applyProfile(pr, tok); afterAuth(projects); }, { note: "You are logged out." });
+  }
+  let begun = false, beginFn = null;
+  function afterAuth(projects) {
+    const p = findProject(projects, profile.batch);
+    if (projects.length && !p) return groupModal(projects, (pr) => { applyProfile(pr); afterAuth(projects); }, "Your project code is no longer active. Please pick your current project code.");
+    if (!profile.group && groupRequired(p)) return groupModal(projects, (pr) => { applyProfile(pr); afterAuth(projects); });
+    if (beginFn) beginFn();
   }
 
   /* ---------- greeting chip in the sidebar ---------- */
@@ -154,8 +290,8 @@
     let c = document.getElementById("vk-chip");
     const host = document.querySelector(".sidebar-progress"); if (!host) return;
     if (!c) { c = document.createElement("div"); c.id = "vk-chip"; c.className = "vk-chip"; host.parentNode.insertBefore(c, host); }
-    c.innerHTML = `👋 <b>${esc(m.name)}</b>${m.group && m.group !== "Not in a group yet" ? ` · ${esc(m.group)}` : ""}${m.batch ? ` · <b>${esc(m.batch)}</b>` : ""} <button type="button">change</button>`;
-    c.querySelector("button").onclick = () => askName(projects, (n, g, code) => { m.name = n; m.group = g; setBatch(m, code); saveMe(m); renderChip(m, projects); ping(curView(), true); lastPush = ""; progressSync(); }, m);
+    c.innerHTML = `👋 <b>${esc(m.name)}</b> · ${m.group ? esc(m.group) : `<span class="vk-light">no group yet</span>`}${m.batch ? ` · <b>${esc(m.batch)}</b>` : ""} <button type="button">account</button>`;
+    c.querySelector("button").onclick = () => accountModal(projects);
   }
 
   function setBatch(m, code) {
@@ -170,7 +306,8 @@
   function curView() { const v = document.querySelector("section.view.active"); return v ? v.id.replace(/^view-/, "") : "home"; }
   function ping(page, force) {
     if (!profile) return; const now = Date.now(); page = page || "home";
-    if (!force && lastPing[page] && now - lastPing[page] < 600000) return;   // one visit per page per 10 minutes (saves database requests) lastPing[page] = now;
+    if (!force && lastPing[page] && now - lastPing[page] < 600000) return;   // one visit per page per 10 minutes (saves database requests)
+    lastPing[page] = now;
     post({ action: "visit", vid: profile.vid, uid: profile.uid || "", last4: profile.last4 || "", name: profile.name || "", group: profile.group || "", batch: profile.batch || "", page }).catch(() => {});
   }
   function hookViews() {
@@ -297,13 +434,74 @@
         window.VK_SUMMARY = { byBatch: by }; window.dispatchEvent(new Event("vk-summary")); } catch (e) {}
     }).catch(() => { box.innerHTML = `<div class="vk-head"><h3>👥 Student visits</h3><span>Could not reach the server.</span></div>`; });
   }
+  /* ---------- trainer: certificates + student accounts ---------- */
+  let accs = null, accState = { q: "", code: "All" }, accMsg = "";
+  function projComplete(p) {
+    const H = window.__SCH || {}; const gs = p.groups || [];
+    const allFinal = gs.length > 0 && gs.every(g => ((p.status || {})[g.id] || {}).final === "done");
+    let fin = ""; try { fin = H.stageDates ? H.stageDates(p).final : ""; } catch (e) {}
+    return { done: allFinal || (!!fin && todayIST() > fin), allFinal, fin };
+  }
+  function liveProjects() { try { const d = window.__SCH && window.__SCH.data && window.__SCH.data(); if (d && d.projects && d.projects.length) return d.projects; } catch (e) {} return SCHED_PROJECTS || []; }
+  function renderAccounts() {
+    const box = document.getElementById("vk-acc"); if (!box || !accs) return;
+    const projects = liveProjects(); const fmtD = (d) => { try { return new Date(d + "T12:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }); } catch (e) { return d; } };
+    const cards = projects.map(p => { const c = projComplete(p); const list = accs.filter(a => normCode(a.batch) === normCode(p.code)); const got = list.filter(a => a.cert).length, mailed = list.filter(a => a.mailed).length; const pend = list.filter(a => !a.cert || (a.email && !a.mailed)).length;
+      return `<div class="vk-cc"><b>${esc(p.code)}</b> · ${list.length} enrolled
+        <div class="st ${c.done ? "ok" : ""}">${c.done ? "✅ Project complete" : `⏳ In progress${c.fin ? ` · Final presentation ${esc(fmtD(c.fin))}` : ""}`}${got ? ` · 🎓 ${got} issued${mailed ? `, ${mailed} emailed` : ""}` : ""}</div>
+        <button type="button" data-cert="${esc(p.code)}" ${c.done && pend ? "" : "disabled"} title="${c.done ? "" : "Unlocks when every group's Final presentation is marked Done, or after the Final presentation date"}">${!c.done ? "🔒 Send certificates (after the Final)" : !list.length ? "No students enrolled yet" : !pend ? `✓ Sent to all ${list.length}` : got ? `🎓 Send to ${pend} new / not emailed` : `🎓 Send certificates to all ${list.length}`}</button></div>`; }).join("");
+    const codes = ["All", ...new Set(accs.map(a => normCode(a.batch) || "—"))];
+    const rows = accs.filter(a => (accState.code === "All" || (normCode(a.batch) || "—") === accState.code) && (!accState.q || (a.name + " " + a.email + " " + a.last4).toLowerCase().includes(accState.q.toLowerCase()))).sort((a, b) => (b.created || 0) - (a.created || 0));
+    box.innerHTML = `<div class="vk-head"><h3>🎓 Certificates & student accounts</h3><span>${accs.length} account${accs.length === 1 ? "" : "s"} · only you can see this</span></div>
+      ${accMsg ? `<div class="vk-note ${/^⚠/.test(accMsg) ? "err" : ""}">${accMsg}</div>` : ""}
+      ${cards ? `<div class="vk-cert">${cards}</div>` : `<p>No project codes yet.</p>`}
+      <div class="vk-tools"><input type="text" id="vk-aq" placeholder="Search name, email or last 4 digits…" value="${esc(accState.q)}">
+        <select id="vk-ac">${codes.map(c => `<option ${c === accState.code ? "selected" : ""}>${esc(c)}</option>`).join("")}</select><button id="vk-aref">⟳ Refresh</button></div>
+      <div class="vk-wrap"><table class="vk-table"><thead><tr><th>Student</th><th>Email</th><th>Mobile</th><th>Project code</th><th>Group</th><th>Enrolled</th><th>Certificate</th><th>Password</th></tr></thead><tbody>
+      ${rows.length ? rows.map(a => `<tr><td><b>${esc(a.name)}</b></td><td>${esc(a.email || "—")}</td><td>${a.last4 ? "••" + esc(a.last4) : "—"}</td><td>${esc(a.batch || "—")}</td><td>${a.group ? esc(a.group) : '<span class="vk-no">not assigned</span>'}</td><td>${a.created ? dt(a.created) : "—"}</td>
+        <td>${a.cert ? `🎓 ${esc(a.cert.id)}${a.mailed ? " · ✉️" : ""}` : '<span class="vk-no">—</span>'}</td>
+        <td>${a.hasPw ? `<button class="vk-mini" data-reset="${esc(a.uid)}" data-n="${esc(a.name)}">Reset</button>` : '<span class="vk-no" title="Checked in before passwords; they set one with Create account">not set</span>'}</td></tr>`).join("")
+        : `<tr><td colspan="8" style="color:var(--ink-muted,#888);padding:16px;">No accounts yet. Students appear here after they enroll on the site.</td></tr>`}</tbody></table></div>`;
+    const aq = box.querySelector("#vk-aq"); aq.addEventListener("input", (e) => { accState.q = e.target.value; const pos = e.target.selectionStart; renderAccounts(); const n = document.getElementById("vk-aq"); n.focus(); n.setSelectionRange(pos, pos); });
+    box.querySelector("#vk-ac").addEventListener("change", (e) => { accState.code = e.target.value; renderAccounts(); });
+    box.querySelector("#vk-aref").addEventListener("click", () => { accMsg = ""; loadAccounts(); });
+    box.querySelectorAll("[data-cert]").forEach(b => b.addEventListener("click", () => {
+      const code = b.dataset.cert; const n = accs.filter(a => normCode(a.batch) === normCode(code)).length;
+      if (!confirm(`Send the Data Analyst Capstone certificate to all ${n} students enrolled in ${code}?\n\nEach student gets an email with a link, and can download the certificate after logging in.`)) return;
+      b.disabled = true; b.textContent = "Sending…";
+      post({ action: "certsend", pin: ss(PINK) || "", code, site: siteName() }).then(j => {
+        accMsg = j && j.ok ? `✅ ${esc(code)}: ${j.issued} new certificate${j.issued === 1 ? "" : "s"} issued (${j.total} enrolled), ${j.emailed} email${j.emailed === 1 ? "" : "s"} sent${j.noEmail ? `, ${j.noEmail} without email` : ""}.${j.mailError ? ` <br>⚠ Email: ${esc(j.mailError)}` : ""}` : `⚠ ${esc((j && j.error) || "Could not send.")}`;
+        loadAccounts();
+      }).catch(() => { accMsg = "⚠ Could not reach the server."; renderAccounts(); });
+    }));
+    box.querySelectorAll("[data-reset]").forEach(b => b.addEventListener("click", () => {
+      if (!confirm(`Reset the password of ${b.dataset.n}? You'll get a temporary password to give them.`)) return;
+      post({ action: "tresetpw", pin: ss(PINK) || "", uid: b.dataset.reset }).then(j => { accMsg = j && j.ok ? `🔑 Temporary password for <b>${esc(b.dataset.n)}</b>: <code style="font-size:15px">${esc(j.temp)}</code> · they log in with it and can change it with "Forgot password" later.` : `⚠ ${esc((j && j.error) || "Could not reset.")}`; renderAccounts(); });
+    }));
+  }
+  function loadAccounts() {
+    let box = document.getElementById("vk-acc"); const rep = document.getElementById("vk-report"); if (!rep) return;
+    if (!box) { box = document.createElement("div"); box.id = "vk-acc"; box.className = "card vk-acc"; rep.parentNode.insertBefore(box, rep.nextSibling); }
+    if (!accs) box.innerHTML = `<div class="vk-head"><h3>🎓 Certificates & student accounts</h3><span>Loading…</span></div>`;
+    post({ action: "accounts", pin: ss(PINK) || "" }).then(j => { if (!j || !j.ok) { box.innerHTML = `<div class="vk-head"><h3>🎓 Certificates & student accounts</h3><span>${esc((j && j.error) || "Could not load")}</span></div>`; return; } accs = j.accounts || []; renderAccounts(); })
+      .catch(() => { box.innerHTML = `<div class="vk-head"><h3>🎓 Certificates & student accounts</h3><span>Could not reach the server.</span></div>`; });
+  }
   function trainerWatch() {
     const isTr = ss(UNLOCK) === "1" && !!ss(PINK);
     const root = document.getElementById("sch-root"); let box = document.getElementById("vk-report");
-    if (isTr && root && !box) { box = document.createElement("div"); box.id = "vk-report"; box.className = "card vk-report"; root.parentNode.insertBefore(box, root.nextSibling); report = null; loadReport(); }
-    if (!isTr && box) { box.remove(); report = null; }
+    if (isTr && root && !box) { box = document.createElement("div"); box.id = "vk-report"; box.className = "card vk-report"; root.parentNode.insertBefore(box, root.nextSibling); report = null; loadReport(); accs = null; accMsg = ""; loadAccounts(); }
+    if (!isTr && box) { box.remove(); report = null; const a = document.getElementById("vk-acc"); if (a) a.remove(); accs = null; }
   }
 
+  let SCHED_PROJECTS = [];
+  function refreshMe(projects, force) {
+    if (!profile || !profile.token) return Promise.resolve("none");
+    return post({ action: "me", token: profile.token }).then(j => {
+      if (j && j.ok) { applyProfile(j.profile); return "ok"; }
+      if (j && j.relogin) { delete profile.token; saveMe(profile); return "relogin"; }
+      return "error";
+    }).catch(() => "offline");
+  }
   /* ---------- start ---------- */
   function start() {
     fetch(API + "?stats=1&t=" + Date.now(), { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(s => {
@@ -311,23 +509,20 @@
       renderCounter(s);
       fetch(API + "?t=" + Date.now(), { cache: "no-store" }).then(r => r.json()).catch(() => null).then(sched => {
         const projects = allProjects(sched);
-        profile = me();
-        // one batch only: assign it silently; several batches: the student must pick (once), and again if their code was removed
-        const known = findProject(projects, profile.batch);
-        if (projects.length === 1 && !known) { profile.batch = projects[0].code; saveMe(profile); }
+        profile = me(); SCHED_PROJECTS = projects;
         const isTrainer = ss(UNLOCK) === "1" || ss(KEY + "_trainer_skip") === "1";
-        // ask only when we really don't know the student: never again once they've logged in on this device
-        const knownStudent = !!profile.name && (profile.uid || profile.codeOk) && !!profile.group && profile.group !== "Not in a group yet";
-        let needCode = !knownStudent;
-        if (knownStudent && projects.length > 0 && !known) {
-          if (projects.length === 1) { setBatch(profile, projects[0].code); saveMe(profile); if (profile.uid && profile.mobile) post({ action: "register", mobile: profile.mobile, name: profile.name, group: profile.group, batch: profile.batch }).catch(() => {}); }
-          else needCode = "moved";
-        }
-        const begin = () => { renderChip(profile, projects); hookViews(); ping(curView(), true); progressSync(); setTimeout(() => fetch(API + "?stats=1&t=" + Date.now()).then(r => r.json()).then(renderCounter).catch(() => {}), 1500); };
+        beginFn = () => { if (begun) { renderChip(profile, projects); return; } begun = true; renderChip(profile, projects); hookViews(); ping(curView(), true); progressSync(); setTimeout(() => fetch(API + "?stats=1&t=" + Date.now()).then(r => r.json()).then(renderCounter).catch(() => {}), 1500); };
+        window.VK_AUTH = { profile: () => profile, refresh: () => refreshMe(projects, true), account: () => profile.token ? accountModal(projects) : authModal(projects, "login", (pr, tok) => { applyProfile(pr, tok); afterAuth(projects); }), login: () => authModal(projects, "login", (pr, tok) => { applyProfile(pr, tok); afterAuth(projects); }) };
         if (isTrainer) return;
-        if (profile.name && !needCode) begin();
-        else askName(projects, (n, g, code) => { profile.name = n; profile.group = g; setBatch(profile, code); saveMe(profile); begin(); }, profile.name ? profile : null,
-          needCode === "moved" ? "Your project code is no longer active. Please pick your current project code." : "");
+        const done = (pr, token) => { applyProfile(pr, token); afterAuth(projects); };
+        if (profile.token) {
+          // refresh the account from the server at most every 20 minutes (saves database requests); always when a group may be needed
+          const p = findProject(projects, profile.batch);
+          const stale = !profile.meAt || Date.now() - profile.meAt > 20 * 60000 || (!profile.group && groupRequired(p));
+          if (!stale && profile.name) return afterAuth(projects);
+          refreshMe(projects).then(r => { if (r === "relogin") authModal(projects, "login", done, { note: "Please log in again.", login: profile.email || "" }); else afterAuth(projects); });
+        } else if (profile.name && profile.uid) authModal(projects, "signup", done, { prefill: profile, note: "New: students now log in with a password." });
+        else authModal(projects, "signup", done);
       });
       setInterval(trainerWatch, 1500); trainerWatch();
     }).catch(() => {});
