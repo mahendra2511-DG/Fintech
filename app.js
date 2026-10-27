@@ -2296,9 +2296,11 @@ const SCH_CFG = String(window.PROJECT_SCHEDULE_API || "").trim();
 const SCH_AUTO = SCH_CFG.toLowerCase() === "auto";
 let SCH_API = SCH_AUTO ? "" : SCH_CFG;
 let schRemote = null, schSyncMsg = "", schSaveTimer = null, schLoaded = !SCH_API, schDown = "", schOff = false, schLastLoad = 0;
+// students read the shared CDN copy (refreshed every few minutes, ~0 database requests); trainers always read fresh data
+function schUrl(base) { return schIsTrainer() ? base + (base.includes("?") ? "&" : "?") + "fresh=1&t=" + Date.now() : base; }
 function schProbe() {
   if (!SCH_AUTO || !/^https?:$/.test(location.protocol)) return;
-  fetch("api/schedule?t=" + Date.now(), { cache: "no-store" }).then(r => r.json().catch(() => null).then(j => [r, j])).then(([r, j]) => {
+  fetch(schUrl("api/schedule"), schIsTrainer() ? { cache: "no-store" } : {}).then(r => r.json().catch(() => null).then(j => [r, j])).then(([r, j]) => {
     if (j && !r.ok && j.error) { schDown = j.error; renderSchedule(); return; }      // database error (e.g. Upstash monthly limit): tell the trainer
     if (j && j.configured === false) { schOff = true; renderSchedule(); return; }      // no Upstash database on this site
     if (!j || !Array.isArray(j.projects)) return;
@@ -2306,7 +2308,7 @@ function schProbe() {
     if (schIsTrainer()) { try { if (!sessionStorage.getItem(SCH_PIN)) sessionStorage.removeItem(SCH_UNLOCK); } catch (e) {} }   // keep a server-checked login across reloads
     schRemote = j.projects.length ? j : null; schBase = schRemote ? schClone(schRemote) : null; schLoaded = true;
     renderSchedule(); renderHeroSchedule();
-    setInterval(() => { if (document.visibilityState === "visible" && (!schIsTrainer() || schIdle())) schLoadRemote(true); }, schIsTrainer() ? 60000 : 300000);   // light on database requests
+    setInterval(() => { if (document.visibilityState === "visible" && (!schIsTrainer() || schIdle())) schLoadRemote(true); }, schIsTrainer() ? 60000 : 120000);   // students see trainer updates within ~2 minutes
   }).catch(() => {});
 }
 /* 3-way merge so two trainer tabs/devices never overwrite each other's changes */
@@ -2338,12 +2340,12 @@ function schIdle() {   // trainer is not in the middle of typing / a form
   if (schNewOpen || document.getElementById("sch-login")) return false;
   return !(a && root && root.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName));
 }
-document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && SCH_API && Date.now() - schLastLoad > 120000 && (!schIsTrainer() || schIdle())) schLoadRemote(true); });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && SCH_API && Date.now() - schLastLoad > 30000 && (!schIsTrainer() || schIdle())) schLoadRemote(true); });
 function schApi(payload) { return fetch(SCH_API, { method: "POST", body: JSON.stringify(payload) }).then(r => r.json()); }
 function schLoadRemote(silent) {
   if (!SCH_API) return Promise.resolve();
   schLastLoad = Date.now();
-  return fetch(SCH_API + (SCH_API.includes("?") ? "&" : "?") + "t=" + Date.now()).then(r => r.json()).then(j => {
+  return fetch(schUrl(SCH_API), schIsTrainer() ? { cache: "no-store" } : {}).then(r => r.json()).then(j => {
     if (schIsTrainer() && (schSaveTimer || !schIdle())) return;
     const nx = j && j.projects && j.projects.length ? j : null;
     if (schIsTrainer() && schJ(nx) === schJ(schRemote)) return;          // nothing new: don't re-render under the trainer
@@ -2356,7 +2358,7 @@ function schPushRemote(d) {
   clearTimeout(schSaveTimer);
   schSaveTimer = setTimeout(() => {
     let pin = ""; try { pin = sessionStorage.getItem(SCH_PIN) || ""; } catch (e) {}
-    fetch(SCH_API + (SCH_API.includes("?") ? "&" : "?") + "t=" + Date.now(), { cache: "no-store" }).then(r => r.json()).catch(() => null).then(latest => {
+    fetch(SCH_API + (SCH_API.includes("?") ? "&" : "?") + "fresh=1&t=" + Date.now(), { cache: "no-store" }).then(r => r.json()).catch(() => null).then(latest => {
       let out = d;
       if (latest && Array.isArray(latest.projects)) {
         out = schMergeDocs(schBase, d, latest);
@@ -2773,9 +2775,13 @@ setInterval(() => { try { if (!schIsTrainer()) renderHeroSchedule(); } catch (e)
 document.addEventListener("DOMContentLoaded", () => {
   renderSchedule(); renderHeroSchedule();
   if (schFromHash()) setTimeout(() => { if (typeof switchView === "function") switchView("schedule"); }, 50);
-  if (SCH_API) { schLoadRemote(); setInterval(() => { if (!schIsTrainer() && document.visibilityState === "visible") schLoadRemote(true); }, 300000); }
+  if (SCH_API) { schLoadRemote(); setInterval(() => { if (!schIsTrainer() && document.visibilityState === "visible") schLoadRemote(true); }, 120000); }
   else schProbe();
 });
+/* read-only access for other kits (Dexa Coach certificate check) */
+window.__SCH = { data: schData, myGroup: schMyGroup, norm: schNorm, stageDates: schStageDates, status: schGroupStatus };
+/* read-only access for other kits (Dexa Coach certificate check) */
+window.__SCH = { data: schData, myGroup: schMyGroup, norm: schNorm, stageDates: schStageDates, status: schGroupStatus };
 /* read-only access for other kits (Dexa Coach certificate check) */
 window.__SCH = { data: schData, myGroup: schMyGroup, norm: schNorm, stageDates: schStageDates, status: schGroupStatus };
 /* read-only access for other kits (Dexa Coach certificate check) */

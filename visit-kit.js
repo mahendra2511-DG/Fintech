@@ -123,7 +123,17 @@
     M.ov.querySelectorAll("input").forEach(i => i.addEventListener("keydown", (e) => { if (e.key === "Enter" && go && !go.disabled) onSubmit(); }));
   }
   const busy = (M, on, label) => { const b = M.$("vk-go"); if (!b) return; b.disabled = on; if (label) b.textContent = label; };
-  const errOut = (M, t) => { const e = M.$("vk-err"); if (e) e.textContent = t || ""; };
+  // if the database is down, students can still open and read the whole site (nothing is ever locked behind the login)
+  const DB_DOWN = /database|server error|reach the server|not reachable/i;   // only real server problems, never a wrong password
+  const errOut = (M, t) => {
+    const e = M.$("vk-err"); if (!e) return; e.textContent = t || "";
+    if (t && DB_DOWN.test(t)) {
+      const b = document.createElement("button"); b.type = "button"; b.className = "vk-guest"; b.textContent = "Continue without login → (open the site)";
+      b.style.cssText = "display:block;width:100%;margin-top:10px;background:transparent;color:inherit;border:1.5px solid currentColor;border-radius:10px;padding:10px;font-weight:700;cursor:pointer";
+      b.addEventListener("click", () => { try { sessionStorage.setItem(KEY + "_guest", "1"); } catch (x) {} M.close(); });
+      e.appendChild(document.createElement("br")); e.appendChild(b);
+    }
+  };
   // mode: "signup" | "login" | "forgot" ; onDone(profileFromServer, token)
   function authModal(projects, mode, onDone, opts) {
     opts = opts || {}; const M = modal(false);
@@ -166,22 +176,33 @@
         }).catch(() => { busy(M, false, "Create account →"); errOut(M, "Could not reach the server. Check your internet and try again."); });
       });
     } else if (mode === "login") {
+      const lastCode = profile.batch || ls.get(KEY + "_schedule_view") || (projects.length === 1 ? projects[0].code : "");
       M.ov.innerHTML = `<div class="vk-modal" role="dialog" aria-modal="true" aria-labelledby="vk-t">${tabs("login")}
-        <h3 id="vk-t">Welcome back 👋</h3><p>${opts.note ? `<b>${esc(opts.note)}</b> ` : ""}Log in with your email or mobile number.</p>
+        <h3 id="vk-t">Welcome back 👋</h3><p>${opts.note ? `<b>${esc(opts.note)}</b> ` : ""}Log in with your email or mobile number. Old students: use the mobile number you checked in with — no new account needed.</p>
         <label for="vk-login">Email or mobile number</label><input id="vk-login" type="text" maxlength="254" autocomplete="username" placeholder="you@example.com or 98xxxxxxxx" value="${esc(opts.login || "")}">
         <label for="vk-pass">Password</label>${pwField("vk-pass", "Your password", "current-password")}
         <div class="vk-row"><a href="#" id="vk-forgot">Forgot password?</a></div>
+        <label for="vk-code">Project code <span class="vk-light">(the project you are attending now)</span></label>${codeSelect(projects, lastCode)}
+        <label for="vk-group">Your group</label><div id="vk-gwrap"></div><div class="vk-light vk-hint" id="vk-ghint"></div>
         <div class="vk-err" id="vk-err" role="alert"></div>
         <button id="vk-go">Log in →</button>
         <small>New here? <a href="#" data-mode2="signup">Create an account</a>. ${trainer}</small></div>`;
+      groupField(M.ov, projects, profile.group || ""); M.$("vk-code").addEventListener(projects.length ? "change" : "input", () => groupField(M.ov, projects, ""));
       setTimeout(() => M.$("vk-login").focus(), 50);
       M.$("vk-forgot").addEventListener("click", (e) => { e.preventDefault(); M.close(); authModal(projects, "forgot", onDone, { email: M.$("vk-login").value.includes("@") ? M.$("vk-login").value.trim() : "" }); });
       wire(M, () => {
         const id = M.$("vk-login").value.trim(), pw = M.$("vk-pass").value;
-        if (!id || !pw) return errOut(M, "Enter your email or mobile number and your password.");
+        const codeRaw = M.$("vk-code").value.trim(), p = findProject(projects, codeRaw), g = readGroup(M.ov);
+        if (!id) return errOut(M, "Enter your email or mobile number.");
+        // an old (mobile-only) account has no password yet: try the mobile number first
+        if (!pw && /^\D*[6-9](\D*\d){9}\D*$/.test(id)) { busy(M, true, "Checking…"); return post({ action: "login", login: id, password: "-" }).then(j => { busy(M, false, "Log in →"); if (j && j.legacy) { M.close(); return claimModal(projects, onDone, { mobile: id.replace(/\D/g, "").slice(-10), batch: codeRaw || j.batch, group: g || j.group }); } errOut(M, "Enter your password."); }).catch(() => { busy(M, false, "Log in →"); errOut(M, "Could not reach the server."); }); }
+        if (!pw) return errOut(M, "Enter your password.");
+        if (projects.length && codeRaw && !p) return errOut(M, "Please select your project code.");
+        if (g === null) return errOut(M, "Please select your group.");
         errOut(M, ""); busy(M, true, "Logging in…");
-        post({ action: "login", login: id, password: pw }).then(j => {
-          if (!j || !j.ok) { busy(M, false, "Log in →"); if (j && j.legacy) { M.close(); return authModal(projects, "signup", onDone, { prefill: Object.assign({}, profile, { mobile: id.replace(/\D/g, "").slice(-10) }), note: j.error }); } return errOut(M, (j && j.error) || "Could not log in."); }
+        const body = { action: "login", login: id, password: pw }; if (codeRaw) { body.batch = p ? p.code : normCode(codeRaw); body.group = g || ""; }
+        post(body).then(j => {
+          if (!j || !j.ok) { busy(M, false, "Log in →"); if (j && j.legacy) { M.close(); return claimModal(projects, onDone, { mobile: id.replace(/\D/g, "").slice(-10), batch: codeRaw || j.batch, group: g || j.group }); } return errOut(M, (j && j.error) || "Could not log in."); }
           if (!id.includes("@")) profile.mobile = id.replace(/\D/g, "").slice(-10);
           ok(j);
         }).catch(() => { busy(M, false, "Log in →"); errOut(M, "Could not reach the server. Check your internet and try again."); });
@@ -218,6 +239,36 @@
     }
     function bindMode2() { M.ov.querySelectorAll("[data-mode2]").forEach(a => a.addEventListener("click", (e) => { e.preventDefault(); swap(a.dataset.mode2); })); }
     bindTabs(); bindMode2();
+  }
+  // old account (checked in with mobile before passwords existed): confirm name, add email + password, keep project code and group
+  function claimModal(projects, onDone, c) {
+    const M = modal(false);
+    M.ov.innerHTML = `<div class="vk-modal" role="dialog" aria-modal="true" aria-labelledby="vk-t">
+      <h3 id="vk-t">Welcome back 👋</h3><p><b>We found your old account</b> for mobile ••${esc(String(c.mobile || "").slice(-4))}. You don't need a new account: confirm your name and set a password once. Your project code and group are kept.</p>
+      <label for="vk-name">Your name <span class="vk-light">(as you entered it the first time)</span></label><input id="vk-name" type="text" maxlength="48" autocomplete="name" placeholder="e.g. Ajay Sharma">
+      <label for="vk-email">Email</label><input id="vk-email" type="email" maxlength="254" autocomplete="email" placeholder="you@example.com">
+      <label for="vk-pass">New password <span class="vk-light">(at least 6 characters)</span></label>${pwField("vk-pass", "Create a password", "new-password")}
+      <label for="vk-code">Project code</label>${codeSelect(projects, c.batch || "")}
+      <label for="vk-group">Your group</label><div id="vk-gwrap"></div><div class="vk-light vk-hint" id="vk-ghint"></div>
+      <div class="vk-err" id="vk-err" role="alert"></div><button id="vk-go">Save & log in →</button>
+      <small><a href="#" id="vk-back">← Back to log in</a></small></div>`;
+    groupField(M.ov, projects, c.group || ""); M.$("vk-code").addEventListener(projects.length ? "change" : "input", () => groupField(M.ov, projects, ""));
+    M.$("vk-back").addEventListener("click", (e) => { e.preventDefault(); M.close(); authModal(projects, "login", onDone, { login: c.mobile }); });
+    setTimeout(() => M.$("vk-name").focus(), 50);
+    wire(M, () => {
+      const name = M.$("vk-name").value.replace(/\s+/g, " ").trim(), email = M.$("vk-email").value.trim(), pw = M.$("vk-pass").value;
+      const codeRaw = M.$("vk-code").value.trim(), p = findProject(projects, codeRaw), g = readGroup(M.ov);
+      if (name.length < 2) return errOut(M, "Please type your name.");
+      if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)) return errOut(M, "Please enter a valid email address.");
+      if (pw.length < 6) return errOut(M, "Password must be at least 6 characters.");
+      if (projects.length && !p) return errOut(M, "Please select your project code.");
+      if (g === null || (!g && groupRequired(p))) return errOut(M, "Please select your group.");
+      busy(M, true, "Saving…");
+      post({ action: "claim", mobile: c.mobile, name, email, password: pw, batch: p ? p.code : normCode(codeRaw), group: g }).then(j => {
+        if (!j || !j.ok) { busy(M, false, "Save & log in →"); return errOut(M, (j && j.error) || "Could not save."); }
+        profile.mobile = c.mobile; M.close(); onDone(j.profile, j.token);
+      }).catch(() => { busy(M, false, "Save & log in →"); errOut(M, "Could not reach the server."); });
+    });
   }
   // after the first meeting a student without a group must pick one (also used when the project code was removed)
   function groupModal(projects, onDone, note) {
@@ -268,7 +319,7 @@
   }
   function applyProfile(pr, token) {
     if (!pr) return; Object.assign(profile, { name: pr.name, email: pr.email, uid: pr.uid, last4: pr.last4, group: pr.group || NOG, cert: pr.cert || null, kickoff: pr.kickoff || "", meAt: Date.now() });
-    if (token) profile.token = token; setBatch(profile, pr.batch); saveMe(profile);
+    if (token) profile.token = token; setBatch(profile, pr.batch); saveMe(profile); ls.set(KEY + "_was_student", "1");
     try { window.dispatchEvent(new Event("vk-account")); } catch (e) {}
   }
   function logout(projects) {
@@ -302,13 +353,18 @@
   }
 
   /* ---------- visit pings ---------- */
-  let lastPing = {}, profile = null;
+  let profile = null; const VQ = KEY + "_vq_v2";
   function curView() { const v = document.querySelector("section.view.active"); return v ? v.id.replace(/^view-/, "") : "home"; }
+  // page views are counted in the browser; the server gets ONE visit per day per browser (or when the account changes)
   function ping(page, force) {
-    if (!profile) return; const now = Date.now(); page = page || "home";
-    if (!force && lastPing[page] && now - lastPing[page] < 600000) return;   // one visit per page per 10 minutes (saves database requests)
-    lastPing[page] = now;
-    post({ action: "visit", vid: profile.vid, uid: profile.uid || "", last4: profile.last4 || "", name: profile.name || "", group: profile.group || "", batch: profile.batch || "", page }).catch(() => {});
+    if (!profile) return; page = String(page || "home").replace(/[^a-z0-9_-]/gi, "").slice(0, 30) || "home";
+    let q; try { q = JSON.parse(ls.get(VQ)) || {}; } catch (e) { q = {}; }
+    q.n = (q.n || 0) + 1; q.pages = q.pages || {}; q.pages[page] = (q.pages[page] || 0) + 1;
+    const who = [profile.uid || "", profile.name || "", profile.group || "", profile.batch || ""].join("|"), day = todayIST();
+    if (q.day === day && q.who === who && !force) { ls.set(VQ, JSON.stringify(q)); return; }
+    if (q.day === day && q.who === who && force && q.sentAt && Date.now() - q.sentAt < 6 * 3600e3) { ls.set(VQ, JSON.stringify(q)); return; }
+    const n = q.n, pages = q.pages; ls.set(VQ, JSON.stringify({ day, who, n: 0, pages: {}, sentAt: Date.now() }));
+    post({ action: "visit", vid: profile.vid, uid: profile.uid || "", last4: profile.last4 || "", name: profile.name || "", group: profile.group || "", batch: profile.batch || "", page, n, pages }).catch(() => {});
   }
   function hookViews() {
     const orig = window.switchView;
@@ -318,27 +374,30 @@
 
   /* ---------- cloud progress (site provides window.HUB_PROGRESS) ---------- */
   const normKey = (n, g) => (String(n || "").toLowerCase() + "|" + String(g || "").toLowerCase()).replace(/\s+/g, " ").trim();
-  let pushTimer = null, lastPush = "";
+  let pushTimer = null, lastPush = "", lastPushAt = 0;
   function progressSync() {
     const H = window.HUB_PROGRESS; if (!H || !profile || !profile.name) return;
     try { if (H.welcome) H.welcome(profile); } catch (e) {}
-    const flag = KEY + "_restored_" + normKey(profile.name, profile.group);
-    post({ action: "restore", name: profile.name, group: profile.group || "" }).then(j => {
+    const flag = KEY + "_restored_" + normKey(profile.name, profile.group), rday = KEY + "_restday_" + normKey(profile.name, profile.group);
+    if (ls.get(rday) === todayIST()) return startPush();          // restore from the cloud once a day per browser
+    post({ action: "restore", name: profile.name, group: profile.group || "" }).then(j => { ls.set(rday, todayIST());
       let changed = false; try { changed = !!(j && j.ok && j.data && H.apply(j.data)); } catch (e) {}
       if (changed && !ss(flag)) { try { sessionStorage.setItem(flag, "1"); } catch (e) {} location.reload(); return; }
       startPush();
     }).catch(startPush);
   }
-  function pushNow() {
+  function pushNow(final) {
     const H = window.HUB_PROGRESS; if (!H || !profile || !profile.name) return;
     let c; try { c = H.collect(); } catch (e) { return; }
-    const sig = JSON.stringify(c.data) + "|" + profile.name + "|" + (profile.group || ""); if (sig === lastPush) return; lastPush = sig;
+    const sig = JSON.stringify(c.data) + "|" + profile.name + "|" + (profile.group || ""); if (sig === lastPush) return;
+    if (!final && Date.now() - lastPushAt < 5 * 60000) return;      // at most one save every 5 minutes, plus one when leaving the page
+    lastPush = sig; lastPushAt = Date.now();
     fetch(API, { method: "POST", keepalive: true, body: JSON.stringify({ action: "progress", name: profile.name, group: profile.group || "", data: c.data, summary: c.summary }) }).catch(() => { lastPush = ""; });
   }
   function startPush() {
-    if (pushTimer) return; pushNow(); pushTimer = setInterval(() => { if (document.visibilityState === "visible") pushNow(); }, 60000);
-    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") pushNow(); });
-    window.addEventListener("hub-progress", () => setTimeout(pushNow, 300));
+    if (pushTimer) return; pushNow(); pushTimer = setInterval(() => { if (document.visibilityState === "visible") pushNow(); }, 5 * 60000);
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") pushNow(true); });
+    window.addEventListener("hub-progress", () => setTimeout(() => pushNow(), 300));
   }
 
   /* ---------- real counter in the hero ---------- */
@@ -435,7 +494,7 @@
     }).catch(() => { box.innerHTML = `<div class="vk-head"><h3>👥 Student visits</h3><span>Could not reach the server.</span></div>`; });
   }
   /* ---------- trainer: certificates + student accounts ---------- */
-  let accs = null, accState = { q: "", code: "All" }, accMsg = "";
+  let accs = null, accCheck = [], accState = { q: "", code: "All", grp: "All", st: "All" }, accMsg = "";
   function projComplete(p) {
     const H = window.__SCH || {}; const gs = p.groups || [];
     const allFinal = gs.length > 0 && gs.every(g => ((p.status || {})[g.id] || {}).final === "done");
@@ -450,20 +509,33 @@
       return `<div class="vk-cc"><b>${esc(p.code)}</b> · ${list.length} enrolled
         <div class="st ${c.done ? "ok" : ""}">${c.done ? "✅ Project complete" : `⏳ In progress${c.fin ? ` · Final presentation ${esc(fmtD(c.fin))}` : ""}`}${got ? ` · 🎓 ${got} issued${mailed ? `, ${mailed} emailed` : ""}` : ""}</div>
         <button type="button" data-cert="${esc(p.code)}" ${c.done && pend ? "" : "disabled"} title="${c.done ? "" : "Unlocks when every group's Final presentation is marked Done, or after the Final presentation date"}">${!c.done ? "🔒 Send certificates (after the Final)" : !list.length ? "No students enrolled yet" : !pend ? `✓ Sent to all ${list.length}` : got ? `🎓 Send to ${pend} new / not emailed` : `🎓 Send certificates to all ${list.length}`}</button></div>`; }).join("");
-    const codes = ["All", ...new Set(accs.map(a => normCode(a.batch) || "—"))];
-    const rows = accs.filter(a => (accState.code === "All" || (normCode(a.batch) || "—") === accState.code) && (!accState.q || (a.name + " " + a.email + " " + a.last4).toLowerCase().includes(accState.q.toLowerCase()))).sort((a, b) => (b.created || 0) - (a.created || 0));
-    box.innerHTML = `<div class="vk-head"><h3>🎓 Certificates & student accounts</h3><span>${accs.length} account${accs.length === 1 ? "" : "s"} · only you can see this</span></div>
+    const stOf = (a) => a.checkin ? "Check-in only" : a.hasPw ? "Active" : "Old – no password yet";
+    const all = accs.map(a => Object.assign({}, a, { status: stOf(a) })).concat(accCheck.map(c => Object.assign({ uid: "", email: "", created: c.first, lastLogin: c.last, logins: 0, checkin: true }, c, { status: "Check-in only" })));
+    const codes = ["All", ...new Set(all.map(a => normCode(a.batch) || "—"))], grps = ["All", ...new Set(all.map(a => a.group || "—"))].sort((x, y) => x === "All" ? -1 : y === "All" ? 1 : x.localeCompare(y, undefined, { numeric: true }));
+    const rows = all.filter(a => (accState.code === "All" || (normCode(a.batch) || "—") === accState.code) && (accState.grp === "All" || (a.group || "—") === accState.grp) && (accState.st === "All" || a.status === accState.st) && (!accState.q || (a.name + " " + a.email + " " + a.last4).toLowerCase().includes(accState.q.toLowerCase()))).sort((a, b) => (b.lastLogin || b.created || 0) - (a.lastLogin || a.created || 0));
+    const nOld = all.filter(a => a.status !== "Active").length;
+    box.innerHTML = `<div class="vk-head"><h3>🎓 Certificates & student accounts</h3><span>${all.length} student${all.length === 1 ? "" : "s"} (${accs.length} account${accs.length === 1 ? "" : "s"}${nOld ? `, ${nOld} old / check-in only` : ""}) · only you can see this</span></div>
       ${accMsg ? `<div class="vk-note ${/^⚠/.test(accMsg) ? "err" : ""}">${accMsg}</div>` : ""}
       ${cards ? `<div class="vk-cert">${cards}</div>` : `<p>No project codes yet.</p>`}
       <div class="vk-tools"><input type="text" id="vk-aq" placeholder="Search name, email or last 4 digits…" value="${esc(accState.q)}">
-        <select id="vk-ac">${codes.map(c => `<option ${c === accState.code ? "selected" : ""}>${esc(c)}</option>`).join("")}</select><button id="vk-aref">⟳ Refresh</button></div>
-      <div class="vk-wrap"><table class="vk-table"><thead><tr><th>Student</th><th>Email</th><th>Mobile</th><th>Project code</th><th>Group</th><th>Enrolled</th><th>Certificate</th><th>Password</th></tr></thead><tbody>
-      ${rows.length ? rows.map(a => `<tr><td><b>${esc(a.name)}</b></td><td>${esc(a.email || "—")}</td><td>${a.last4 ? "••" + esc(a.last4) : "—"}</td><td>${esc(a.batch || "—")}</td><td>${a.group ? esc(a.group) : '<span class="vk-no">not assigned</span>'}</td><td>${a.created ? dt(a.created) : "—"}</td>
+        <select id="vk-ac">${codes.map(c => `<option ${c === accState.code ? "selected" : ""}>${esc(c)}</option>`).join("")}</select><select id="vk-ag" title="Group">${grps.map(c => `<option value="${esc(c)}" ${c === accState.grp ? "selected" : ""}>${c === "All" ? "All groups" : esc(c)}</option>`).join("")}</select>
+        <select id="vk-as" title="Status">${["All", "Active", "Old – no password yet", "Check-in only"].map(c => `<option value="${esc(c)}" ${c === accState.st ? "selected" : ""}>${c === "All" ? "All students" : esc(c)}</option>`).join("")}</select>
+        <button id="vk-aref">⟳ Refresh</button><button id="vk-acsv">⬇ CSV</button></div>
+      <p class="vk-light" style="margin:6px 0 0">Old students log in with their old mobile number and set a password once; they never need a new account. Showing ${rows.length}.</p>
+      <div class="vk-wrap"><table class="vk-table"><thead><tr><th>Student</th><th>Email</th><th>Mobile</th><th>Project code</th><th>Group</th><th>Status</th><th>Enrolled</th><th>Last login</th><th>Logins</th><th>Certificate</th><th>Password</th></tr></thead><tbody>
+      ${rows.length ? rows.map(a => `<tr><td><b>${esc(a.name)}</b></td><td>${esc(a.email || "—")}</td><td>${a.last4 ? "••" + esc(a.last4) : "—"}</td><td>${esc(a.batch || "—")}</td><td>${a.group ? esc(a.group) : '<span class="vk-no">not assigned</span>'}</td><td>${a.status === "Active" ? "🟢 Active" : a.checkin ? '<span class="vk-no">Check-in only</span>' : '<span class="vk-no">🟡 Old – no password yet</span>'}</td><td>${a.created ? dt(a.created) : "—"}</td><td>${a.lastLogin ? dt(a.lastLogin) : "—"}</td><td>${a.logins || (a.checkin ? "—" : 0)}</td>
         <td>${a.cert ? `🎓 ${esc(a.cert.id)}${a.mailed ? " · ✉️" : ""}` : '<span class="vk-no">—</span>'}</td>
-        <td>${a.hasPw ? `<button class="vk-mini" data-reset="${esc(a.uid)}" data-n="${esc(a.name)}">Reset</button>` : '<span class="vk-no" title="Checked in before passwords; they set one with Create account">not set</span>'}</td></tr>`).join("")
-        : `<tr><td colspan="8" style="color:var(--ink-muted,#888);padding:16px;">No accounts yet. Students appear here after they enroll on the site.</td></tr>`}</tbody></table></div>`;
+        <td>${a.checkin ? '<span class="vk-no">—</span>' : a.hasPw ? `<button class="vk-mini" data-reset="${esc(a.uid)}" data-n="${esc(a.name)}">Reset</button>` : '<span class="vk-no" title="Checked in before passwords; they set one with Create account">not set</span>'}</td></tr>`).join("")
+        : `<tr><td colspan="11" style="color:var(--ink-muted,#888);padding:16px;">No accounts yet. Students appear here after they enroll on the site.</td></tr>`}</tbody></table></div>`;
     const aq = box.querySelector("#vk-aq"); aq.addEventListener("input", (e) => { accState.q = e.target.value; const pos = e.target.selectionStart; renderAccounts(); const n = document.getElementById("vk-aq"); n.focus(); n.setSelectionRange(pos, pos); });
     box.querySelector("#vk-ac").addEventListener("change", (e) => { accState.code = e.target.value; renderAccounts(); });
+    box.querySelector("#vk-ag").addEventListener("change", (e) => { accState.grp = e.target.value; renderAccounts(); });
+    box.querySelector("#vk-as").addEventListener("change", (e) => { accState.st = e.target.value; renderAccounts(); });
+    box.querySelector("#vk-acsv").addEventListener("click", () => {
+      const q = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"', iso = (t) => t ? new Date(t).toISOString().slice(0, 16).replace("T", " ") : "";
+      const csv = [["Student", "Email", "Mobile last 4", "Project code", "Group", "Status", "Enrolled", "Last login", "Logins", "Certificate"].join(",")].concat(rows.map(a => [a.name, a.email, a.last4, a.batch, a.group, a.status, iso(a.created), iso(a.lastLogin), a.logins || 0, a.cert ? a.cert.id : ""].map(q).join(","))).join("\n");
+      const l = document.createElement("a"); l.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv" })); l.download = "students-" + todayIST() + ".csv"; document.body.appendChild(l); l.click(); l.remove();
+    });
     box.querySelector("#vk-aref").addEventListener("click", () => { accMsg = ""; loadAccounts(); });
     box.querySelectorAll("[data-cert]").forEach(b => b.addEventListener("click", () => {
       const code = b.dataset.cert; const n = accs.filter(a => normCode(a.batch) === normCode(code)).length;
@@ -479,11 +551,46 @@
       post({ action: "tresetpw", pin: ss(PINK) || "", uid: b.dataset.reset }).then(j => { accMsg = j && j.ok ? `🔑 Temporary password for <b>${esc(b.dataset.n)}</b>: <code style="font-size:15px">${esc(j.temp)}</code> · they log in with it and can change it with "Forgot password" later.` : `⚠ ${esc((j && j.error) || "Could not reset.")}`; renderAccounts(); });
     }));
   }
+  /* ---------- trainer: database status + copy old data (Upstash → Supabase) ---------- */
+  let dbInfo = null, dbMsg = "", dbBusy = false;
+  function renderDb() {
+    const box = document.getElementById("vk-db"); if (!box || !dbInfo) return; const d = dbInfo;
+    const st = (ok, err) => ok === true ? "🟢 working" : ok === false ? `🔴 ${esc(err || "not working")}` : "—";
+    const canCopy = d.main === "Supabase" && d.mainOk && d.backup;
+    box.innerHTML = `<div class="vk-head"><h3>🗄️ Database</h3><span>only you can see this</span></div>
+      <p style="margin:6px 0">Main: <b>${esc(d.main || "none")}</b> · ${st(d.mainOk, d.mainErr)}${d.backup ? `<br>Backup (old data): <b>${esc(d.backup)}</b> · ${st(d.backupOk, d.backupErr)}` : ""}</p>
+      ${canCopy ? `<p style="margin:6px 0">${d.imported ? `✅ Old data copied on ${esc(new Date(d.imported).toLocaleString("en-IN"))}. You can copy again any time (nothing is overwritten).` : `Old students, accounts, schedule and progress are still in ${esc(d.backup)}. They are brought over automatically when a student logs in, or copy everything now:`}</p>
+        <button id="vk-dbcopy" ${dbBusy || !d.backupOk ? "disabled" : ""}>${dbBusy ? "Copying…" : `⇪ Copy old data from ${esc(d.backup)}`}</button>${!d.backupOk ? ` <span class="vk-light">(${esc(d.backup)} must be working: upgrade it or wait for its monthly reset)</span>` : ""}` : ""}
+      ${d.main === "Supabase" && d.mainOk === false && /setup yet|supabase-setup/.test(d.mainErr || "") ? `<p class="vk-note err">Run <b>supabase-setup.sql</b> once in Supabase → SQL Editor, then reload.</p>` : ""}
+      ${dbMsg ? `<div class="vk-note ${/^⚠/.test(dbMsg) ? "err" : ""}">${dbMsg}</div>` : ""}`;
+    const b = box.querySelector("#vk-dbcopy"); if (b) b.addEventListener("click", copyOld);
+  }
+  async function copyOld() {
+    if (dbBusy) return; dbBusy = true; dbMsg = "⏳ Copying… keep this tab open."; renderDb();
+    let cursor = "0", n = 0, copied = 0, rounds = 0;
+    try {
+      do {
+        const j = await post({ action: "import", pin: ss(PINK) || "", cursor });
+        if (!j || !j.ok) throw new Error((j && j.error) || "Could not copy");
+        cursor = j.cursor; n += j.scanned; copied += j.copied; rounds++;
+        dbMsg = `⏳ Copying… ${copied} items so far`; renderDb();
+      } while (cursor !== "0" && rounds < 400);
+      dbMsg = `✅ Done: ${copied} items copied (students, accounts, schedule, progress). Old students can log in normally.`;
+      accs = null; loadAccounts();
+    } catch (e) { dbMsg = "⚠ " + esc(e.message); }
+    dbBusy = false; loadDb();
+  }
+  function loadDb() {
+    const acc = document.getElementById("vk-acc"); if (!acc) return;
+    let box = document.getElementById("vk-db"); if (!box) { box = document.createElement("div"); box.id = "vk-db"; box.className = "card vk-acc"; acc.parentNode.insertBefore(box, acc); }
+    post({ action: "dbinfo", pin: ss(PINK) || "" }).then(j => { if (j && j.ok) { dbInfo = j; renderDb(); } else box.remove(); }).catch(() => box.remove());
+  }
   function loadAccounts() {
     let box = document.getElementById("vk-acc"); const rep = document.getElementById("vk-report"); if (!rep) return;
     if (!box) { box = document.createElement("div"); box.id = "vk-acc"; box.className = "card vk-acc"; rep.parentNode.insertBefore(box, rep.nextSibling); }
     if (!accs) box.innerHTML = `<div class="vk-head"><h3>🎓 Certificates & student accounts</h3><span>Loading…</span></div>`;
-    post({ action: "accounts", pin: ss(PINK) || "" }).then(j => { if (!j || !j.ok) { box.innerHTML = `<div class="vk-head"><h3>🎓 Certificates & student accounts</h3><span>${esc((j && j.error) || "Could not load")}</span></div>`; return; } accs = j.accounts || []; renderAccounts(); })
+    if (!dbInfo && !document.getElementById("vk-db")) loadDb();
+    post({ action: "accounts", pin: ss(PINK) || "" }).then(j => { if (!j || !j.ok) { box.innerHTML = `<div class="vk-head"><h3>🎓 Certificates & student accounts</h3><span>${esc((j && j.error) || "Could not load")}</span></div>`; return; } accs = j.accounts || []; accCheck = j.checkins || []; renderAccounts(); })
       .catch(() => { box.innerHTML = `<div class="vk-head"><h3>🎓 Certificates & student accounts</h3><span>Could not reach the server.</span></div>`; });
   }
   function trainerWatch() {
@@ -504,24 +611,25 @@
   }
   /* ---------- start ---------- */
   function start() {
-    fetch(API + "?stats=1&t=" + Date.now(), { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(s => {
+    fetch(API + "?stats=1").then(r => r.ok ? r.json() : null).then(s => {
       if (!s || typeof s.unique !== "number") return;          // live API not connected → stay hidden
       renderCounter(s);
-      fetch(API + "?t=" + Date.now(), { cache: "no-store" }).then(r => r.json()).catch(() => null).then(sched => {
+      fetch(API).then(r => r.json()).catch(() => null).then(sched => {
         const projects = allProjects(sched);
         profile = me(); SCHED_PROJECTS = projects;
         const isTrainer = ss(UNLOCK) === "1" || ss(KEY + "_trainer_skip") === "1";
-        beginFn = () => { if (begun) { renderChip(profile, projects); return; } begun = true; renderChip(profile, projects); hookViews(); ping(curView(), true); progressSync(); setTimeout(() => fetch(API + "?stats=1&t=" + Date.now()).then(r => r.json()).then(renderCounter).catch(() => {}), 1500); };
+        beginFn = () => { if (begun) { renderChip(profile, projects); return; } begun = true; renderChip(profile, projects); hookViews(); ping(curView(), true); progressSync(); };
         window.VK_AUTH = { profile: () => profile, refresh: () => refreshMe(projects, true), account: () => profile.token ? accountModal(projects) : authModal(projects, "login", (pr, tok) => { applyProfile(pr, tok); afterAuth(projects); }), login: () => authModal(projects, "login", (pr, tok) => { applyProfile(pr, tok); afterAuth(projects); }) };
-        if (isTrainer) return;
+        if (isTrainer || ss(KEY + "_guest") === "1") return;
         const done = (pr, token) => { applyProfile(pr, token); afterAuth(projects); };
         if (profile.token) {
-          // refresh the account from the server at most every 20 minutes (saves database requests); always when a group may be needed
+          // refresh the account from the server at most every 6 hours (saves database requests); always when a group may be needed
           const p = findProject(projects, profile.batch);
-          const stale = !profile.meAt || Date.now() - profile.meAt > 20 * 60000 || (!profile.group && groupRequired(p));
+          const stale = !profile.meAt || Date.now() - profile.meAt > 6 * 3600e3 || (!profile.group && groupRequired(p));
           if (!stale && profile.name) return afterAuth(projects);
           refreshMe(projects).then(r => { if (r === "relogin") authModal(projects, "login", done, { note: "Please log in again.", login: profile.email || "" }); else afterAuth(projects); });
-        } else if (profile.name && profile.uid) authModal(projects, "signup", done, { prefill: profile, note: "New: students now log in with a password." });
+        } else if (profile.name && profile.uid) authModal(projects, "login", done, { note: "Log in with the mobile number you used before. No new account needed.", login: profile.mobile || "" });
+        else if (ls.get(KEY + "_was_student") === "1") authModal(projects, "login", done);
         else authModal(projects, "signup", done);
       });
       setInterval(trainerWatch, 1500); trainerWatch();

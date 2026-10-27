@@ -437,45 +437,148 @@
     return `<h4>📍 Where the problems are on your dashboard</h4>${vis}${general.length ? `<div class="rv-mute">Issues about the whole dashboard or the data model: ${nums(general)}</div>` : ""}`;
   }
 
-  /* ---- wireframe SVG ---- */
+  /* ---- wireframe: realistic mock-up + blueprint + step-by-step build guide ---- */
   const WF = { W: 1200, pad: 16, gap: 12, unit: 66, top: 0 };
   function wireLayout(page) {
     const colW = (WF.W - 2 * WF.pad - 11 * WF.gap) / 12; let y = WF.pad, n = 0; const out = [];
     page.rows.forEach(row => {
       const h = row.h * WF.unit + (row.h - 1) * WF.gap; let c = 0;
-      row.blocks.forEach(b => { const x = WF.pad + c * (colW + WF.gap), w = b.span * colW + (b.span - 1) * WF.gap; out.push(Object.assign({}, b, { x, y, w, h, n: ++n })); c += b.span; });
+      row.blocks.forEach(b => { const x = WF.pad + c * (colW + WF.gap), w = b.span * colW + (b.span - 1) * WF.gap; out.push(Object.assign({}, b, { dim: typeof b.x === "string" ? b.x : "", mea: typeof b.y === "string" ? b.y : "", x, y, w, h, n: ++n })); c += b.span; });
       y += h + WF.gap;
     });
     return { blocks: out, H: y + WF.pad - WF.gap };
   }
-  function mini(b, x, y, w, h) {   // tiny placeholder drawing for each chart type
-    const g = "#CBD5E1", a = "#1F9E8B", t = b.chart; let s = "";
-    const bars = (k, horiz) => { for (let i = 0; i < k; i++) { const v = [0.9, 0.7, 0.55, 0.45, 0.35, 0.28][i % 6]; if (horiz) { const bh = h / k * 0.6; s += `<rect x="${x}" y="${y + i * h / k}" width="${w * v}" height="${bh}" rx="3" fill="${i ? g : a}"/>`; } else { const bw = w / k * 0.6; s += `<rect x="${x + i * w / k}" y="${y + h * (1 - v)}" width="${bw}" height="${h * v}" rx="3" fill="${i === 2 ? a : g}"/>`; } } };
-    if (/^(bar|stacked-bar|bullet)$/.test(t)) bars(5, true);
-    else if (/^(column|histogram|waterfall)$/.test(t)) bars(7, false);
-    else if (/^(line|area|combo)$/.test(t)) { const pts = [0.6, 0.45, 0.55, 0.3, 0.4, 0.2, 0.25].map((v, i) => `${x + i * w / 6},${y + h * v}`).join(" "); if (t === "combo") bars(7, false); s += t === "area" ? `<polygon points="${x},${y + h} ${pts} ${x + w},${y + h}" fill="#CCEFE9"/>` : ""; s += `<polyline points="${pts}" fill="none" stroke="${a}" stroke-width="3"/>`; }
-    else if (/^(pie|donut|gauge)$/.test(t)) { const r = Math.min(w, h) / 2, cx = x + w / 2, cy = y + h / 2; s += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${g}"/><path d="M${cx},${cy} L${cx},${cy - r} A${r},${r} 0 0,1 ${cx + r * 0.95},${cy + r * 0.31} Z" fill="${a}"/>${t !== "pie" ? `<circle cx="${cx}" cy="${cy}" r="${r * 0.55}" fill="#fff"/>` : ""}`; }
-    else if (t === "map") { s += `<path d="M${x + w * .1},${y + h * .5} q${w * .15},-${h * .45} ${w * .4},-${h * .3} t${w * .45},${h * .1} q-${w * .05},${h * .5} -${w * .4},${h * .55} t-${w * .45},-${h * .35}z" fill="${g}"/><circle cx="${x + w * .35}" cy="${y + h * .4}" r="6" fill="${a}"/><circle cx="${x + w * .65}" cy="${y + h * .55}" r="9" fill="${a}"/>`; }
-    else if (t === "scatter") { for (let i = 0; i < 12; i++) s += `<circle cx="${x + ((i * 37) % 100) / 100 * w}" cy="${y + h - ((i * 53) % 100) / 100 * h}" r="4" fill="${i % 4 ? g : a}"/>`; }
-    else if (t === "funnel") { for (let i = 0; i < 4; i++) { const ww = w * (1 - i * 0.2); s += `<rect x="${x + (w - ww) / 2}" y="${y + i * h / 4}" width="${ww}" height="${h / 4 - 4}" fill="${i ? g : a}"/>`; } }
-    else { const cr = Math.max(2, Math.min(6, Math.floor(h / 18))), cc = t === "table" || t === "matrix" ? 4 : 5; for (let i = 0; i < cr; i++) for (let j = 0; j < cc; j++) s += `<rect x="${x + j * w / cc}" y="${y + i * h / cr}" width="${w / cc - 3}" height="${h / cr - 3}" fill="${i === 0 && /table|matrix/.test(t) ? "#94A3B8" : (t === "heatmap" || t === "treemap") && (i + j) % 3 === 0 ? a : "#E2E8F0"}"/>`; }
+  // colours come from the site's own theme so the mock-up looks like it belongs here (resolved to hex for PNG/SVG export)
+  function theme() {
+    const cs = getComputedStyle(document.documentElement), bs = getComputedStyle(document.body);
+    const v = (n, d) => ((bs.getPropertyValue(n) || cs.getPropertyValue(n) || "").trim() || d);
+    const pal = [v("--teal", "#0E86C9"), v("--blue", "#2856A3"), v("--amber", "#A15C07"), v("--teal-deep", "#0A5A87"), "#94A3B8", "#7C3AED"];
+    return { pal, acc: pal[0], tint: "#EEF4F8", ink: "#0F172A", mute: "#64748B", line: "#E2E8F0", grid: "#EEF2F6", bg: "#F5F7FA", card: "#FFFFFF", up: "#15803D", down: "#B91C1C" };
+  }
+  const F = 'font-family="Inter, Segoe UI, Arial, Helvetica, sans-serif"';
+  function rng(seed) { let s = (seed * 9301 + 49297) % 233280; return () => (s = (s * 9301 + 49297) % 233280) / 233280; }
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function catsOf(b, k) {
+    if (b.cats && b.cats.length >= 2) return b.cats.slice(0, k);
+    if (/date|month|week|day|year|time|period|quarter/i.test(b.dim || "")) return MONTHS.slice(0, k);
+    const base = (b.dim || "Category").replace(/[_]/g, " ").split(/[·,]/)[0].trim();
+    return Array.from({ length: k }, (_, i) => `${cut(base, 10)} ${String.fromCharCode(65 + i)}`);
+  }
+  function sampleVal(b, r) {
+    if (b.value) return b.value;
+    const l = (b.label + " " + (b.mea || "") + " " + (b.fields || "")).toLowerCase();
+    if (/%|rate|ratio|share|margin|percent/.test(l)) return (8 + r() * 70).toFixed(1) + "%";
+    if (/revenue|sales|amount|cost|spend|premium|salary|value|profit|₹|inr/.test(l)) return "₹" + (1 + r() * 9).toFixed(1) + " Cr";
+    if (/day|time|tat|duration|hours|minutes/.test(l)) return (2 + r() * 30).toFixed(1) + " days";
+    if (/avg|average|aov|adr|per /.test(l)) return "₹" + Math.round(400 + r() * 4000).toLocaleString("en-IN");
+    return Math.round(200 + r() * 9000).toLocaleString("en-IN");
+  }
+  const fmtN = (v, pct) => pct ? Math.round(v) + "%" : v >= 1000 ? (v / 1000).toFixed(1) + "k" : String(Math.round(v));
+  function T(x, y, s, o) { o = o || {}; return `<text x="${x}" y="${y}" font-size="${o.fs || 11}" ${o.b ? 'font-weight="700"' : ""} fill="${o.c || "#64748B"}" ${o.a ? `text-anchor="${o.a}"` : ""} ${o.rot ? `transform="rotate(${o.rot} ${x} ${y})"` : ""} ${F}>${esc(s)}</text>`; }
+  const WORDS = ["North", "South", "East", "West", "Central", "Online", "Retail"];
+  function cellVal(c, i, r) {
+    const n = String(c).toLowerCase();
+    if (/rating|score|stars/.test(n)) return (1 + r() * 4).toFixed(1);
+    if (/tenure|year|age/.test(n)) return (1 + r() * 9).toFixed(1) + (/age/.test(n) ? "" : " yrs");
+    if (/%|rate|ratio|share|margin/.test(n)) return Math.round(5 + r() * 60) + "%";
+    if (/date|month/.test(n)) return MONTHS[(i * 3) % 12] + " 2025";
+    if (/revenue|amount|sales|cost|salary|spend|value|premium|price/.test(n)) return "₹" + Math.round(10 + r() * 990).toLocaleString("en-IN") + "k";
+    if (/count|qty|quantity|orders|total|number|units|visits|leads/.test(n)) return Math.round(20 + r() * 2000).toLocaleString("en-IN");
+    return cut(c, 10) + " " + WORDS[i % WORDS.length].slice(0, 1) + (i + 1);
+  }
+  function chartMock(b, x, y, w, h, th) {
+    const r = rng(b.n * 7 + 3), t = b.chart, P = th.pal, isPct = /%|rate|ratio|share/i.test(b.mea || b.label);
+    let s = "";
+    const axisT = (xt, yt) => (xt ? T(x + w / 2, y + h + 2, xt, { a: "middle", fs: 10 }) : "") + (yt ? T(x - 34, y + h / 2, yt, { a: "middle", fs: 10, rot: -90 }) : "");
+    const series = b.legend ? 2 : 1;
+    const legend = (names, lx, ly) => names.map((nm, i) => `<rect x="${lx + i * 90}" y="${ly - 8}" width="10" height="10" rx="2" fill="${P[i]}"/>${T(lx + i * 90 + 14, ly + 1, cut(nm, 11), { fs: 10 })}`).join("");
+    if (/^(bar|bullet|stacked-bar)$/.test(t)) {
+      const cats = catsOf(b, Math.max(3, Math.min(6, Math.floor(h / 26)))), lw = Math.min(110, w * 0.3), bw = w - lw - 40, rh = h / cats.length;
+      const vals = cats.map(() => 0.25 + r() * 0.75).sort((a, c) => c - a);
+      cats.forEach((c, i) => { const yy = y + i * rh + rh * 0.18, bh = rh * 0.62, v = vals[i];
+        s += T(x + lw - 6, yy + bh / 2 + 4, cut(c, Math.floor(lw / 6.3)), { a: "end", c: "#334155" });
+        if (t === "stacked-bar") { const a = v * 0.6, c2 = v * 0.4; s += `<rect x="${x + lw}" y="${yy}" width="${bw * a}" height="${bh}" fill="${P[0]}" rx="2"/><rect x="${x + lw + bw * a}" y="${yy}" width="${bw * c2}" height="${bh}" fill="${P[1]}" rx="2"/>`; }
+        else s += `<rect x="${x + lw}" y="${yy}" width="${bw * v}" height="${bh}" rx="3" fill="${i === 0 ? P[0] : P[0] + "99"}"/>`;
+        if (t === "bullet") s += `<rect x="${x + lw + bw * Math.min(.97, v + .12)}" y="${yy - 3}" width="3" height="${bh + 6}" fill="${th.ink}"/>`;
+        s += T(x + lw + bw * v + 5, yy + bh / 2 + 4, fmtN(v * (isPct ? 60 : 9000), isPct), { fs: 10, c: "#334155", b: true }); });
+      if (b.legend || t === "stacked-bar") s += legend([b.legend ? b.legend + " 1" : "Part 1", b.legend ? b.legend + " 2" : "Part 2"], x + lw, y - 4);
+      return s + (b.mea ? T(x + lw + bw / 2, y + h + 2, b.mea, { a: "middle", fs: 10 }) : "");
+    }
+    if (/^(column|histogram|waterfall|combo)$/.test(t)) {
+      const cats = catsOf(b, Math.max(4, Math.min(8, Math.floor(w / 60)))), ph = h - 16, cw = w / cats.length;
+      for (let g = 0; g <= 3; g++) s += `<line x1="${x}" x2="${x + w}" y1="${y + ph - ph * g / 3}" y2="${y + ph - ph * g / 3}" stroke="${th.grid}"/>`;
+      let acc = 0.15; const pts = [];
+      cats.forEach((c, i) => { const v = 0.3 + r() * 0.65, bw = cw * (series > 1 ? 0.32 : 0.56), x0 = x + i * cw + (cw - bw * series) / 2;
+        if (t === "waterfall") { const d = (r() - 0.35) * 0.3, y0 = Math.min(acc, acc + d); s += `<rect x="${x0}" y="${y + ph - ph * (y0 + Math.abs(d))}" width="${bw}" height="${ph * Math.max(.02, Math.abs(d))}" fill="${d >= 0 ? th.up : th.down}" rx="2"/>`; acc += d; }
+        else { s += `<rect x="${x0}" y="${y + ph - ph * v}" width="${bw}" height="${ph * v}" rx="3" fill="${P[0]}"/>`; if (series > 1) { const v2 = v * (0.5 + r() * 0.5); s += `<rect x="${x0 + bw}" y="${y + ph - ph * v2}" width="${bw}" height="${ph * v2}" rx="3" fill="${P[1]}"/>`; } }
+        pts.push([x + i * cw + cw / 2, y + ph - ph * (0.35 + r() * 0.5)]);
+        s += T(x + i * cw + cw / 2, y + ph + 12, cut(c, Math.max(3, Math.floor(cw / 6.5))), { a: "middle", fs: 10, c: "#334155" }); });
+      if (t === "combo") s += `<polyline points="${pts.map(p => p.join(",")).join(" ")}" fill="none" stroke="${P[2]}" stroke-width="2.5"/>` + pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="${P[2]}"/>`).join("");
+      if (b.legend) s += legend([b.legend + " 1", b.legend + " 2"], x, y - 4);
+      return s + axisT("", b.mea);
+    }
+    if (/^(line|area)$/.test(t)) {
+      const cats = catsOf(b, Math.max(5, Math.min(12, Math.floor(w / 50)))), ph = h - 16, step = w / (cats.length - 1);
+      for (let g = 0; g <= 3; g++) s += `<line x1="${x}" x2="${x + w}" y1="${y + ph - ph * g / 3}" y2="${y + ph - ph * g / 3}" stroke="${th.grid}"/>`;
+      for (let k = 0; k < series; k++) { let v = 0.35 + r() * 0.3; const pts = cats.map((c, i) => { v = Math.max(.08, Math.min(.95, v + (r() - 0.45) * 0.22)); return [x + i * step, y + ph - ph * v]; });
+        if (t === "area" && k === 0) s += `<polygon points="${x},${y + ph} ${pts.map(p => p.join(",")).join(" ")} ${x + w},${y + ph}" fill="${P[0]}" opacity=".18"/>`;
+        s += `<polyline points="${pts.map(p => p.map(n => n.toFixed(1)).join(",")).join(" ")}" fill="none" stroke="${P[k]}" stroke-width="2.6" stroke-linejoin="round"/>` + pts.map(p => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.6" fill="#fff" stroke="${P[k]}" stroke-width="2"/>`).join(""); }
+      cats.forEach((c, i) => { if (cats.length <= 8 || i % 2 === 0) s += T(x + i * step, y + ph + 12, cut(c, 6), { a: "middle", fs: 10, c: "#334155" }); });
+      if (b.legend) s += legend([b.legend + " 1", b.legend + " 2"], x, y - 4);
+      return s + axisT("", b.mea);
+    }
+    if (/^(pie|donut|gauge)$/.test(t)) {
+      const R = Math.min(h / 2 - 4, w * 0.28), cx = x + R + 6, cy = y + h / 2;
+      if (t === "gauge") { const v = 0.35 + r() * 0.5, a = Math.PI * (1 - v); s += `<path d="M${cx - R},${cy + R / 3} A${R},${R} 0 0 1 ${cx + R},${cy + R / 3}" fill="none" stroke="${th.grid}" stroke-width="${R / 3}"/><path d="M${cx - R},${cy + R / 3} A${R},${R} 0 0 1 ${(cx + R * Math.cos(a)).toFixed(1)},${(cy + R / 3 - R * Math.sin(a)).toFixed(1)}" fill="none" stroke="${P[0]}" stroke-width="${R / 3}"/>` + T(cx, cy + R / 3, sampleVal(b, r), { a: "middle", fs: 18, b: true, c: th.ink }); return s; }
+      const cats = catsOf(b, 4), vals = [0.42, 0.27, 0.19, 0.12]; let a0 = -Math.PI / 2;
+      vals.forEach((v, i) => { const a1 = a0 + v * Math.PI * 2, lg = v > .5 ? 1 : 0; s += `<path d="M${cx},${cy} L${(cx + R * Math.cos(a0)).toFixed(1)},${(cy + R * Math.sin(a0)).toFixed(1)} A${R},${R} 0 ${lg} 1 ${(cx + R * Math.cos(a1)).toFixed(1)},${(cy + R * Math.sin(a1)).toFixed(1)} Z" fill="${P[i]}" stroke="#fff" stroke-width="2"/>`; a0 = a1; });
+      if (t === "donut") s += `<circle cx="${cx}" cy="${cy}" r="${R * 0.58}" fill="#fff"/>` + T(cx, cy + 5, "100%", { a: "middle", fs: 13, b: true, c: th.ink });
+      cats.forEach((c, i) => { const ly = y + 12 + i * 18; if (ly < y + h) s += `<rect x="${cx + R + 16}" y="${ly - 8}" width="10" height="10" rx="2" fill="${P[i]}"/>` + T(cx + R + 30, ly + 1, `${cut(c, 14)} · ${Math.round(vals[i] * 100)}%`, { fs: 10.5, c: "#334155" }); });
+      return s;
+    }
+    if (t === "map") { s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="#EEF4F8"/><path d="M${x + w * .18},${y + h * .55} q${w * .12},-${h * .42} ${w * .36},-${h * .3} t${w * .3},${h * .1} q-${w * .02},${h * .48} -${w * .32},${h * .52} t-${w * .34},-${h * .32}z" fill="#D7E2EC" stroke="#B6C6D6"/>`; catsOf(b, 4).forEach((c, i) => { const px = x + w * (.3 + i * .14), py = y + h * (.35 + (i % 2) * .22), rr = 6 + (4 - i) * 3; s += `<circle cx="${px}" cy="${py}" r="${rr}" fill="${P[0]}" opacity=".75"/>` + T(px, py - rr - 3, cut(c, 10), { a: "middle", fs: 9.5, c: "#334155" }); }); return s; }
+    if (t === "scatter") { for (let i = 0; i < 22; i++) s += `<circle cx="${(x + 8 + r() * (w - 16)).toFixed(1)}" cy="${(y + 8 + r() * (h - 24)).toFixed(1)}" r="4" fill="${P[i % 5 ? 0 : 2]}" opacity=".8"/>`; return s + `<line x1="${x}" y1="${y + h - 14}" x2="${x + w}" y2="${y + h - 14}" stroke="${th.line}"/>` + axisT(b.dim, b.mea); }
+    if (t === "funnel") { const cats = catsOf(b, 4); cats.forEach((c, i) => { const ww = w * (0.95 - i * 0.18), bh = h / 4 - 5; s += `<rect x="${x + (w - ww) / 2}" y="${y + i * h / 4}" width="${ww}" height="${bh}" rx="4" fill="${P[0]}" opacity="${1 - i * 0.18}"/>` + T(x + w / 2, y + i * h / 4 + bh / 2 + 4, `${cut(c, 16)} · ${fmtN(9000 * (1 - i * 0.28))}`, { a: "middle", fs: 10.5, c: "#fff", b: true }); }); return s; }
+    if (t === "treemap") { const cats = catsOf(b, 5); const sz = [[0, 0, .55, 1], [.55, 0, .45, .55], [.55, .55, .25, .45], [.8, .55, .2, .25], [.8, .8, .2, .2]]; sz.forEach((z, i) => { s += `<rect x="${x + w * z[0]}" y="${y + h * z[1]}" width="${w * z[2] - 2}" height="${h * z[3] - 2}" fill="${P[i % 4]}" opacity="${.9 - i * .1}"/>`; if (w * z[2] > 40 && h * z[3] > 18) s += T(x + w * z[0] + 6, y + h * z[1] + 14, cut(cats[i], Math.floor(w * z[2] / 7)), { fs: 10.5, c: "#fff", b: true }); }); return s; }
+    if (t === "heatmap") { const rows = catsOf(b, Math.min(5, Math.floor(h / 22))), cols = Math.min(7, Math.floor((w - 70) / 34)); rows.forEach((rw, i) => { s += T(x + 60, y + i * (h / rows.length) + h / rows.length / 2 + 4, cut(rw, 9), { a: "end", fs: 10, c: "#334155" }); for (let j = 0; j < cols; j++) s += `<rect x="${x + 66 + j * (w - 70) / cols}" y="${y + i * h / rows.length}" width="${(w - 70) / cols - 3}" height="${h / rows.length - 3}" rx="3" fill="${P[0]}" opacity="${(0.15 + r() * 0.85).toFixed(2)}"/>`; }); return s; }
+    // table / matrix / card / slicer fallback → a real-looking table
+    const cols = (b.fields || [b.dim, b.mea].filter(Boolean).join(" · ") || "Name · Value").split(/\s*[·,|]\s*/).filter(Boolean).slice(0, 5);
+    const nr = Math.max(2, Math.min(7, Math.floor(h / 22) - 1)), cw = w / cols.length, cats = catsOf(b, nr);
+    s += `<rect x="${x}" y="${y}" width="${w}" height="22" fill="${th.tint}"/>` + cols.map((c, j) => T(x + j * cw + 8, y + 15, cut(c, Math.floor(cw / 6.6)), { fs: 10.5, b: true, c: th.ink })).join("");
+    for (let i = 0; i < nr; i++) { const yy = y + 22 + i * 22; s += `<line x1="${x}" x2="${x + w}" y1="${yy + 22}" y2="${yy + 22}" stroke="${th.grid}"/>`; cols.forEach((c, j) => { s += T(x + j * cw + 8, yy + 15, cut(j === 0 ? cats[i] : cellVal(c, i, r), Math.floor(cw / 6.6)), { fs: 10.5, c: "#334155" }); }); }
     return s;
   }
-  function wireSvg(page, title) {
-    const L = wireLayout(page); const F = 'font-family="Arial, Helvetica, sans-serif"';
+  function wireSvg(page, title, mode, th) {
+    th = th || theme(); const L = wireLayout(page), bp = mode === "blueprint";
     const body = L.blocks.map(b => {
-      const { x, y, w, h } = b; let inner = "";
-      const label = (fs, yy) => `<text x="${x + 12}" y="${y + yy}" font-size="${fs}" font-weight="700" fill="#0F172A" ${F}>${esc(cut(b.label, Math.floor(w / (fs * 0.58))))}</text>`;
-      const sub = (yy) => b.fields ? `<text x="${x + 12}" y="${y + yy}" font-size="11" fill="#64748B" ${F}>${esc(cut(b.fields, Math.floor(w / 6.2)))}</text>` : "";
-      if (b.type === "title") inner = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="#0F172A"/><text x="${x + 16}" y="${y + Math.min(h / 2 + 8, 40)}" font-size="22" font-weight="700" fill="#fff" ${F}>${esc(cut(b.label, Math.floor(w / 12)))}</text>`;
-      else if (b.type === "filter") inner = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="#EFF6FF" stroke="#2563EB" stroke-dasharray="6 4"/><text x="${x + 12}" y="${y + 18}" font-size="10" fill="#2563EB" ${F}>FILTER</text><rect x="${x + 12}" y="${y + 26}" width="${w - 24}" height="${Math.min(30, h - 34)}" rx="6" fill="#fff" stroke="#93C5FD"/><text x="${x + 22}" y="${y + 26 + Math.min(30, h - 34) / 2 + 5}" font-size="13" fill="#0F172A" ${F}>${esc(cut(b.label, Math.floor((w - 50) / 7)))}</text><text x="${x + w - 26}" y="${y + 26 + Math.min(30, h - 34) / 2 + 5}" font-size="12" fill="#2563EB" ${F}>▾</text>`;
-      else if (b.type === "kpi") inner = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="#fff" stroke="#CBD5E1"/><rect x="${x}" y="${y}" width="${w}" height="4" rx="2" fill="#1F9E8B"/><text x="${x + 12}" y="${y + 22}" font-size="11" font-weight="700" fill="#475569" ${F}>${esc(cut(b.label.toUpperCase(), Math.floor(w / 7)))}</text><text x="${x + 12}" y="${y + Math.min(h - 12, 54)}" font-size="${h > 60 ? 26 : 20}" font-weight="700" fill="#94A3B8" ${F}>##.#</text>`;
-      else if (b.type === "text") inner = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="#FFFBEB" stroke="#FCD34D"/>${label(13, 22)}${[0, 1, 2].filter(i => 34 + i * 14 < h - 6).map(i => `<rect x="${x + 12}" y="${y + 34 + i * 14}" width="${(w - 24) * (1 - i * 0.2)}" height="6" rx="3" fill="#FDE68A"/>`).join("")}`;
-      else if (b.type === "legend" || b.type === "nav") inner = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="#F8FAFC" stroke="#CBD5E1"/>${label(12, 20)}${[0, 1, 2].map(i => `<rect x="${x + 12 + i * Math.min(70, (w - 24) / 3)}" y="${y + 30}" width="${Math.min(60, (w - 36) / 3)}" height="${Math.max(8, Math.min(18, h - 40))}" rx="4" fill="${i ? "#E2E8F0" : "#1F9E8B"}"/>`).join("")}`;
-      else { const top = b.fields ? 44 : 32; inner = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="#fff" stroke="#CBD5E1"/>${label(14, 22)}${sub(37)}${h - top - 14 > 16 ? mini(b, x + 14, y + top, w - 28, h - top - 14) : ""}`; }
-      return `<g>${inner}<g transform="translate(${x + w - 16},${y + 14})"><circle r="11" fill="#7C3AED"/><text text-anchor="middle" y="4" font-size="11" font-weight="700" fill="#fff" ${F}>${b.n}</text></g></g>`;
+      const { x, y, w, h } = b, r = rng(b.n * 13 + 1); let inner = "";
+      const head = (fs) => T(x + 14, y + 22, cut(b.label, Math.floor(w / (fs * 0.56))), { fs, b: true, c: th.ink });
+      if (bp) {
+        const lines = [];
+        if (b.type === "chart" || b.type === "table") { if (b.dim) lines.push("Axis / rows: " + b.dim); if (b.mea) lines.push("Values: " + b.mea); if (b.legend) lines.push("Colour / legend: " + b.legend); }
+        else if (b.type === "kpi") lines.push("Measure: " + (b.mea || b.fields || b.label), b.compare ? "Compare: " + b.compare : "");
+        else if (b.type === "filter") lines.push("Field: " + (b.fields || b.label), b.options && b.options.length ? "Values: " + b.options.join(", ") : "");
+        else if (b.fields) lines.push(b.fields);
+        if (b.why) lines.push("Answers: " + b.why);
+        inner = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="#F8FAFC" stroke="${th.pal[1]}" stroke-dasharray="6 4" stroke-width="1.5"/>${head(13)}${T(x + 14, y + 38, (b.type === "chart" ? b.chart : b.type).toUpperCase(), { fs: 9.5, b: true, c: th.pal[1] })}
+          ${lines.filter(Boolean).map((l, i) => y + 56 + i * 15 < y + h - 4 ? T(x + 14, y + 56 + i * 15, cut(l, Math.floor((w - 24) / 6)), { fs: 11, c: "#334155" }) : "").join("")}`;
+      } else if (b.type === "title") inner = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="${th.card}"/><rect x="${x}" y="${y + h - 4}" width="${w}" height="4" rx="2" fill="${th.acc}"/>${T(x + 16, y + Math.min(h / 2 + 4, 34), cut(b.label, Math.floor(w / 11)), { fs: 20, b: true, c: th.ink })}${h > 50 && page.purpose ? T(x + 16, y + Math.min(h / 2 + 22, 52), cut(page.purpose, Math.floor(w / 6.5)), { fs: 11 }) : ""}`;
+      else if (b.type === "filter") { const bh = Math.min(30, h - 26), op = (b.options && b.options[0]) || "All"; inner = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="${th.card}"/>${T(x + 12, y + 16, cut(b.label.toUpperCase(), Math.floor(w / 7)), { fs: 9.5, b: true })}<rect x="${x + 12}" y="${y + 22}" width="${w - 24}" height="${bh}" rx="6" fill="#fff" stroke="#CBD5E1"/>${T(x + 22, y + 22 + bh / 2 + 4, cut(op, Math.floor((w - 50) / 7)), { fs: 12, c: th.ink })}${T(x + w - 26, y + 22 + bh / 2 + 4, "▾", { fs: 12, c: th.acc })}`; }
+      else if (b.type === "kpi") { const up = r() > 0.35, val = sampleVal(b, r), sp = Array.from({ length: 8 }, (_, i) => `${x + w - 74 + i * 9},${y + h - 14 - r() * 18}`).join(" ");
+        inner = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="${th.card}"/><rect x="${x}" y="${y}" width="4" height="${h}" rx="2" fill="${th.acc}"/>${T(x + 14, y + 20, cut(b.label.toUpperCase(), Math.floor(w / 7)), { fs: 10, b: true })}${T(x + 14, y + (h > 80 ? 54 : 43), val, { fs: h > 80 ? 26 : 20, b: true, c: th.ink })}${h > 60 ? T(x + 14, y + h - 9, `${up ? "▲" : "▼"} ${(1 + r() * 6).toFixed(1)}${/%/.test(val) ? " pts" : "%"} ${b.compare || "vs last period"}`, { fs: 10, b: true, c: up ? th.up : th.down }) : ""}${w > 150 && h > 60 ? `<polyline points="${sp}" fill="none" stroke="${th.acc}" stroke-width="2"/>` : ""}`; }
+      else if (b.type === "text") inner = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="#FFFBEB" stroke="#FCD34D"/>${T(x + 14, y + 22, "💡 " + cut(b.label, Math.floor(w / 7.5)), { fs: 13, b: true, c: th.ink })}${b.why ? T(x + 14, y + 42, cut(b.why, Math.floor((w - 28) / 6)), { fs: 11 }) : ""}`;
+      else if (b.type === "legend" || b.type === "nav") inner = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="${th.card}"/>${head(12)}${(b.options && b.options.length ? b.options : catsOf(b, 3)).slice(0, 4).map((c, i) => `<rect x="${x + 14 + i * Math.min(110, (w - 28) / 3)}" y="${y + 30}" width="${Math.min(100, (w - 40) / 3)}" height="22" rx="11" fill="${i ? "#F1F5F9" : th.acc}"/>${T(x + 24 + i * Math.min(110, (w - 28) / 3), y + 45, cut(c, 12), { fs: 10.5, c: i ? "#334155" : "#fff", b: true })}`).join("")}`;
+      else { const top = 38, legendRoom = b.legend || b.chart === "stacked-bar" ? 16 : 0, padL = /^(bar|bullet|stacked-bar|pie|donut|gauge|map|treemap|funnel|heatmap|table|matrix|card|slicer)$/.test(b.chart) ? 14 : 46;
+        inner = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="${th.card}"/>${head(13.5)}${b.dim || b.mea ? T(x + 14, y + 34, cut([b.mea, b.dim].filter(Boolean).join(" by "), Math.floor((w - 28) / 6)), { fs: 10 }) : ""}
+          ${h - top - 30 > 24 ? chartMock(b, x + padL, y + top + 8 + legendRoom, w - padL - 16, h - top - 34 - legendRoom, th) : ""}`; }
+      return `<g class="rv-wb" data-n="${b.n}">${inner}${b.type === "title" ? "" : `<g transform="translate(${x + w - 15},${y + 14})"><circle r="11" fill="${th.pal[1]}"/><text text-anchor="middle" y="4" font-size="11" font-weight="700" fill="#fff" ${F}>${b.n}</text></g>`}</g>`;
     }).join("");
-    return { svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WF.W} ${L.H}" width="${WF.W}" height="${L.H}" role="img" aria-label="${esc(title)}"><rect width="${WF.W}" height="${L.H}" fill="#F1F5F9"/>${body}</svg>`, blocks: L.blocks, H: L.H };
+    return { svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WF.W} ${L.H}" width="${WF.W}" height="${L.H}" role="img" aria-label="${esc(title)}"><rect width="${WF.W}" height="${L.H}" fill="${bp ? "#FFFFFF" : th.bg}"/>${bp ? `<defs><pattern id="rvgrid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#E2E8F0" stroke-width=".6"/></pattern></defs><rect width="${WF.W}" height="${L.H}" fill="url(#rvgrid)"/>` : ""}${body}</svg>`, blocks: L.blocks, H: L.H };
+  }
+  function curThumb(R) {
+    const L = R.layout; if (!L || !L.boxes || !L.boxes.length) return "";
+    const W = 600, H = Math.round(W / (L.ratio || 16 / 9));
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Your current dashboard layout"><rect width="${W}" height="${H}" fill="#fff" stroke="#CBD5E1"/>${L.boxes.map(b => `<rect x="${b.x / 100 * W + 1}" y="${b.y / 100 * H + 1}" width="${Math.max(4, b.w / 100 * W - 2)}" height="${Math.max(4, b.h / 100 * H - 2)}" rx="3" fill="#F1F5F9" stroke="#94A3B8"/>`).join("")}</svg>`;
   }
   function excalidraw(wire) {
     const els = []; let seed = 1; let oy = 0;
@@ -487,25 +590,43 @@
       L.blocks.forEach(b => {
         const bg = { title: "#1e1e1e", filter: "#dbe4ff", kpi: "#e6fcf5", text: "#fff9db" }[b.type] || "#ffffff";
         els.push(base({ type: "rectangle", x: b.x, y: oy + b.y, width: b.w, height: b.h, backgroundColor: bg, strokeStyle: b.type === "filter" ? "dashed" : "solid" }));
-        const t = `${b.n}. ${b.label}${b.type === "chart" ? ` (${b.chart})` : b.type !== "title" ? ` [${b.type}]` : ""}${b.fields && b.h > 60 ? "\n" + cut(b.fields, Math.floor(b.w / 8)) : ""}`;
+        const t = `${b.n}. ${b.label}${b.type === "chart" ? ` (${b.chart})` : b.type !== "title" ? ` [${b.type}]` : ""}${b.h > 60 ? "\n" + cut([b.dim && "Axis: " + b.dim, b.mea && "Values: " + b.mea].filter(Boolean).join(" · ") || b.fields || "", Math.floor(b.w / 8)) : ""}`;
         els.push(txt(b.x + 10, oy + b.y + 8, t, b.type === "title" ? 22 : 15, b.type === "title" ? "#ffffff" : "#1e1e1e"));
       });
       oy += L.H + 60;
     });
     return JSON.stringify({ type: "excalidraw", version: 2, source: "https://excalidraw.com", elements: els, appState: { viewBackgroundColor: "#ffffff", gridSize: null }, files: {} });
   }
-  let wirePage = 0;
+  let wirePage = 0, wireMode = "mock";
+  const doneKey = (R) => SKEY + "_wdone_" + R.ts;
+  const getDone = (R) => { try { return JSON.parse(ls.get(doneKey(R)) || "{}"); } catch (e) { return {}; } };
   function wireHtml(R, live) {
     if (!R.review) return "";
     if (!R.wire) return `<h4>🧭 Suggested wireframe</h4>${R.wireError ? `<div class="rv-note warn">${esc(R.wireError)}</div>` : ""}${live ? `<button class="btn-outline" id="rv-wire">✨ Suggest a better wireframe</button>` : ""}`;
-    const W = R.wire, pg = W.pages[Math.min(wirePage, W.pages.length - 1)], ws = wireSvg(pg, W.title);
-    return `<h4>🧭 Suggested wireframe: ${esc(W.title)}</h4>
-      <div class="rv-mute">${W.audience ? "For " + esc(W.audience) + " · " : ""}A layout you can build in your tool. Numbers match the build notes below.</div>
-      ${W.pages.length > 1 ? `<div class="rv-wtabs">${W.pages.map((p, i) => `<button type="button" class="${p === pg ? "on" : ""}" data-wpage="${i}">${esc(p.name)}</button>`).join("")}</div>` : ""}
-      ${pg.purpose ? `<p class="rv-mute">${esc(pg.purpose)}</p>` : ""}
+    const W = R.wire, pi = Math.min(wirePage, W.pages.length - 1), pg = W.pages[pi], ws = wireSvg(pg, W.title, live ? wireMode : "mock");
+    const kindName = KIND_LABEL[R.kind] && R.kind !== "image" ? KIND_LABEL[R.kind] : "Tableau / Power BI";
+    const items = ws.blocks.filter(b => b.type !== "title"), done = live ? getDone(R) : {}, nd = items.filter(b => done[pi + ":" + b.n]).length;
+    const chip = (k, v) => v ? `<span class="rv-fchip"><b>${k}</b>${esc(v)}</span>` : "";
+    const cards = items.map(b => {
+      const steps = b.steps && b.steps.length ? b.steps : b.build ? [b.build] : [];
+      const id = pi + ":" + b.n;
+      return `<div class="rv-bcard ${done[id] ? "done" : ""}" id="rv-bc-${b.n}" data-n="${b.n}">
+        <div class="rv-bhead"><span class="rv-bnum">${b.n}</span><b>${esc(b.label)}</b><span class="rv-chip">${esc(b.type === "chart" ? b.chart : b.type)}</span>${live ? `<label class="rv-bdone"><input type="checkbox" data-done="${id}" ${done[id] ? "checked" : ""}> Built</label>` : ""}</div>
+        ${b.why ? `<div class="rv-bwhy">❓ <b>Answers:</b> ${esc(b.why)}</div>` : ""}
+        <div class="rv-bf">${b.type === "kpi" ? chip("Measure", b.mea || b.fields || b.label) + chip("Compare", b.compare) : b.type === "filter" ? chip("Field", b.fields || b.label) + chip("Values", (b.options || []).join(", ")) : chip(b.type === "table" || b.chart === "table" || b.chart === "matrix" ? "Rows" : "Axis", b.dim) + chip("Values", b.mea) + chip("Colour", b.legend)}${!b.dim && !b.mea && b.type !== "kpi" && b.type !== "filter" ? chip("Fields", b.fields) : ""}</div>
+        ${steps.length ? `<div class="rv-bsteps"><b>🛠 Build it in ${esc(kindName)}</b><ol>${steps.map(s => `<li>${esc(s)}</li>`).join("")}</ol></div>` : ""}</div>`;
+    }).join("");
+    const cur = curThumb(R);
+    return `<h4>🧭 Suggested dashboard: ${esc(W.title)}</h4>
+      <div class="rv-howto"><div><b>1</b>Look at the mock-up: it shows how your dashboard should look.</div><div><b>2</b>Click any numbered box to see what it answers and how to build it.</div><div><b>3</b>Build each one in ${esc(kindName)} and tick <i>Built</i>.</div><div><b>4</b>Upload again for a new score.</div></div>
+      <div class="rv-mute">${W.audience ? "For <b>" + esc(W.audience) + "</b> · " : ""}${pg.read ? esc(pg.read) : "Read it like a page: KPIs on top, the main chart top-left, details at the bottom."} Numbers and names in the mock-up are <b>sample values</b> to show the idea.</div>
+      ${W.pages.length > 1 ? `<div class="rv-wtabs">${W.pages.map((p, i) => `<button type="button" class="${i === pi ? "on" : ""}" data-wpage="${i}">Page ${i + 1}: ${esc(p.name)}</button>`).join("")}</div>` : ""}
+      ${live ? `<div class="rv-wmode" role="tablist"><button type="button" class="${wireMode === "mock" ? "on" : ""}" data-wmode="mock">🖼️ Mock-up</button><button type="button" class="${wireMode === "blueprint" ? "on" : ""}" data-wmode="blueprint">📐 Blueprint (which field goes where)</button></div>` : ""}
       <div class="rv-wire">${ws.svg}</div>
-      ${live ? `<div class="rv-row"><button class="btn-outline" id="rv-wsvg">⬇️ SVG</button><button class="btn-outline" id="rv-wpng">⬇️ PNG</button><button class="btn-outline" id="rv-wex" title="Download an .excalidraw file and open excalidraw.com (free) to edit it">✏️ Edit in Excalidraw</button><button class="btn-outline" id="rv-wire">🔄 New suggestion</button></div>` : ""}
-      <ol class="rv-wlist">${ws.blocks.filter(b => b.type !== "title").map(b => `<li value="${b.n}"><b>${esc(b.label)}</b> <span class="rv-chip">${esc(b.type === "chart" ? b.chart : b.type)}</span>${b.fields ? ` <span class="rv-mute">${esc(b.fields)}</span>` : ""}${b.why ? `<div>${esc(b.why)}</div>` : ""}${b.build ? `<div class="rv-build">🛠 ${esc(b.build)}</div>` : ""}</li>`).join("")}</ol>
+      ${live ? `<div class="rv-row"><button class="btn-outline" id="rv-wpng">⬇️ PNG</button><button class="btn-outline" id="rv-wsvg">⬇️ SVG</button><button class="btn-outline" id="rv-wex" title="Download an .excalidraw file and open excalidraw.com (free) to edit it">✏️ Edit in Excalidraw</button><button class="btn-outline" id="rv-wire">🔄 New suggestion</button></div>` : ""}
+      ${cur ? `<details class="rv-cmp"><summary>Compare with your current dashboard</summary><div class="rv-cmpg"><div><div class="rv-mute">Your dashboard now</div>${cur}</div><div><div class="rv-mute">Suggested</div>${wireSvg(pg, W.title, "mock").svg}</div></div></details>` : ""}
+      <h4>🧱 Build guide ${live ? `<span class="rv-bprog"><i style="width:${items.length ? nd / items.length * 100 : 0}%"></i></span><span class="rv-mute">${nd} of ${items.length} built</span>` : ""}</h4>
+      <div class="rv-bgrid">${cards}</div>
       ${W.changes.length ? `<h4>🔁 What to change from your current dashboard</h4><ol class="rv-list">${W.changes.map(c => `<li>${esc(c)}</li>`).join("")}</ol>` : ""}
       ${W.tips.length ? `<h4>💡 Design tips</h4><ul class="rv-list">${W.tips.map(c => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}`;
   }
@@ -513,8 +634,13 @@
   function bindWire() {
     const R = state.result; if (!R) return;
     document.querySelectorAll("#rv-root [data-wpage]").forEach(b => b.addEventListener("click", () => { wirePage = +b.dataset.wpage; render(); setTimeout(() => { const w = document.querySelector(".rv-wire"); if (w) w.scrollIntoView({ block: "center" }); }, 30); }));
+    document.querySelectorAll("#rv-root [data-wmode]").forEach(b => b.addEventListener("click", () => { wireMode = b.dataset.wmode; const y = window.scrollY; render(); window.scrollTo(0, y); }));
+    document.querySelectorAll("#rv-root .rv-wire .rv-wb").forEach(g => g.addEventListener("click", () => { const c = document.getElementById("rv-bc-" + g.dataset.n); if (!c) return; document.querySelectorAll("#rv-root .rv-bcard.hl").forEach(x => x.classList.remove("hl")); c.classList.add("hl"); c.scrollIntoView({ block: "center", behavior: "smooth" }); }));
+    document.querySelectorAll("#rv-root .rv-bcard").forEach(c => c.addEventListener("mouseenter", () => { document.querySelectorAll("#rv-root .rv-wire .rv-wb").forEach(g => g.classList.toggle("dim", g.dataset.n !== c.dataset.n)); }));
+    document.querySelectorAll("#rv-root .rv-bgrid").forEach(gr => gr.addEventListener("mouseleave", () => document.querySelectorAll("#rv-root .rv-wire .rv-wb").forEach(g => g.classList.remove("dim"))));
+    document.querySelectorAll("#rv-root [data-done]").forEach(cb => cb.addEventListener("change", () => { const d = getDone(R); if (cb.checked) d[cb.dataset.done] = 1; else delete d[cb.dataset.done]; ls.set(doneKey(R), JSON.stringify(d)); const y = window.scrollY; render(); window.scrollTo(0, y); }));
     const nm = () => (R.file.replace(/\.[^.]+$/, "").replace(/[^\w-]+/g, "_") || "dashboard") + "-wireframe";
-    const svgNow = () => wireSvg(R.wire.pages[Math.min(wirePage, R.wire.pages.length - 1)], R.wire.title);
+    const svgNow = () => wireSvg(R.wire.pages[Math.min(wirePage, R.wire.pages.length - 1)], R.wire.title, wireMode);
     const s1 = $("rv-wsvg"); if (s1) s1.addEventListener("click", () => saveBlob(new Blob([svgNow().svg], { type: "image/svg+xml" }), nm() + ".svg"));
     const s2 = $("rv-wpng"); if (s2) s2.addEventListener("click", () => { const w = svgNow(); const img = new Image(); img.onload = () => { const c = document.createElement("canvas"); c.width = WF.W * 2; c.height = w.H * 2; const g = c.getContext("2d"); g.scale(2, 2); g.drawImage(img, 0, 0); c.toBlob(b => saveBlob(b, nm() + ".png"), "image/png"); }; img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(w.svg); });
     const s3 = $("rv-wex"); if (s3) s3.addEventListener("click", () => { saveBlob(new Blob([excalidraw(R.wire)], { type: "application/json" }), nm() + ".excalidraw"); setTimeout(() => { if (confirm("The .excalidraw file is downloaded.\n\nExcalidraw (free) will open now: click the menu ☰ → Open, and choose the downloaded file. You can then move boxes, rename charts and export.")) window.open("https://excalidraw.com/", "_blank", "noopener"); }, 300); });
@@ -538,7 +664,7 @@
   async function thumb(dataUrl) {
     return new Promise(ok => { const i = new Image(); i.onload = () => { const sc = Math.min(1, 1000 / i.naturalWidth); const c = document.createElement("canvas"); c.width = Math.round(i.naturalWidth * sc); c.height = Math.round(i.naturalHeight * sc); c.getContext("2d").drawImage(i, 0, 0, c.width, c.height); ok(c.toDataURL("image/jpeg", 0.6)); }; i.onerror = () => ok(null); i.src = dataUrl; });
   }
-  const RCSS = `body{font-family:Inter,Segoe UI,Arial,sans-serif;max-width:900px;margin:24px auto;padding:0 16px;color:#0F172A;line-height:1.5}h3{margin:4px 0}h4{margin:20px 0 6px}.rv-mute{color:#64748B;font-size:13px}.rv-tag,.rv-chip{display:inline-block;font-size:11px;padding:1px 8px;border-radius:20px;background:#EEF2F7;margin-left:6px}.rv-score{display:flex;gap:18px;align-items:center;margin:14px 0}.rv-dial{width:96px;height:96px;border-radius:50%;border:6px solid #16A34A;display:flex;flex-direction:column;align-items:center;justify-content:center}.rv-dial.a{border-color:#D97706}.rv-dial.r{border-color:#DC2626}.rv-dial b{font-size:30px}.rv-bar{margin:8px 0}.rv-bl{display:flex;justify-content:space-between;font-size:14px}.rv-bt{height:8px;background:#EEF2F7;border-radius:4px}.rv-bt i{display:block;height:100%;background:#1F9E8B;border-radius:4px}.rv-bc{font-size:12.5px;color:#475569}.rv-issue{border:1px solid #E2E8F0;border-left:4px solid #94A3B8;border-radius:8px;padding:10px 12px;margin:8px 0;font-size:13.5px}.rv-issue.critical{border-left-color:#DC2626}.rv-issue.high{border-left-color:#EA580C}.rv-issue.medium{border-left-color:#CA8A04}.rv-issue.low{border-left-color:#2563EB}.rv-code{white-space:pre-wrap;background:#F1F5F9;padding:8px;border-radius:6px;font-size:12px}.rv-stats{display:flex;gap:10px;flex-wrap:wrap}.rv-stats div{border:1px solid #E2E8F0;border-radius:8px;padding:6px 12px;text-align:center}.rv-stats b{display:block;font-size:18px}.rv-stats span{font-size:11.5px;color:#64748B}.rv-d.up{color:#16A34A}.rv-d.dn{color:#DC2626}.rv-acts{display:none}.rv-pin{display:inline-block;min-width:18px;padding:0 5px;border-radius:10px;background:#DC2626;color:#fff;font-size:11px;font-weight:700;text-align:center;margin-right:4px}.rv-shotwrap{position:relative}.rv-shotwrap img{width:100%;display:block}.rv-hot{position:absolute;border:3px solid #DC2626;border-radius:6px}.rv-hot .rv-pin{position:absolute;top:-10px;left:-10px}.rv-cur,.rv-wire svg{width:100%;height:auto}.rv-wlist{padding-left:26px;font-size:13.5px}.rv-wlist li{margin-bottom:6px}.rv-build{font-size:12px;color:#475569}`;
+  const RCSS = `body{font-family:Inter,Segoe UI,Arial,sans-serif;max-width:900px;margin:24px auto;padding:0 16px;color:#0F172A;line-height:1.5}h3{margin:4px 0}h4{margin:20px 0 6px}.rv-mute{color:#64748B;font-size:13px}.rv-tag,.rv-chip{display:inline-block;font-size:11px;padding:1px 8px;border-radius:20px;background:#EEF2F7;margin-left:6px}.rv-score{display:flex;gap:18px;align-items:center;margin:14px 0}.rv-dial{width:96px;height:96px;border-radius:50%;border:6px solid #16A34A;display:flex;flex-direction:column;align-items:center;justify-content:center}.rv-dial.a{border-color:#D97706}.rv-dial.r{border-color:#DC2626}.rv-dial b{font-size:30px}.rv-bar{margin:8px 0}.rv-bl{display:flex;justify-content:space-between;font-size:14px}.rv-bt{height:8px;background:#EEF2F7;border-radius:4px}.rv-bt i{display:block;height:100%;background:#1F9E8B;border-radius:4px}.rv-bc{font-size:12.5px;color:#475569}.rv-issue{border:1px solid #E2E8F0;border-left:4px solid #94A3B8;border-radius:8px;padding:10px 12px;margin:8px 0;font-size:13.5px}.rv-issue.critical{border-left-color:#DC2626}.rv-issue.high{border-left-color:#EA580C}.rv-issue.medium{border-left-color:#CA8A04}.rv-issue.low{border-left-color:#2563EB}.rv-code{white-space:pre-wrap;background:#F1F5F9;padding:8px;border-radius:6px;font-size:12px}.rv-stats{display:flex;gap:10px;flex-wrap:wrap}.rv-stats div{border:1px solid #E2E8F0;border-radius:8px;padding:6px 12px;text-align:center}.rv-stats b{display:block;font-size:18px}.rv-stats span{font-size:11.5px;color:#64748B}.rv-d.up{color:#16A34A}.rv-d.dn{color:#DC2626}.rv-acts{display:none}.rv-pin{display:inline-block;min-width:18px;padding:0 5px;border-radius:10px;background:#DC2626;color:#fff;font-size:11px;font-weight:700;text-align:center;margin-right:4px}.rv-shotwrap{position:relative}.rv-shotwrap img{width:100%;display:block}.rv-hot{position:absolute;border:3px solid #DC2626;border-radius:6px}.rv-hot .rv-pin{position:absolute;top:-10px;left:-10px}.rv-cur,.rv-wire svg{width:100%;height:auto}.rv-wlist{padding-left:26px;font-size:13.5px}.rv-wlist li{margin-bottom:6px}.rv-build{font-size:12px;color:#475569}.rv-wire svg{width:100%;height:auto;display:block;border:1px solid #E2E8F0;border-radius:10px}.rv-howto{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}.rv-howto div{background:#EEF4F8;border-radius:8px;padding:8px;font-size:12px}.rv-bgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.rv-bcard{border:1px solid #E2E8F0;border-radius:10px;padding:10px;break-inside:avoid}.rv-bhead{display:flex;gap:8px;align-items:center;margin-bottom:4px}.rv-bnum{display:inline-block;width:22px;height:22px;line-height:22px;text-align:center;border-radius:50%;background:#2856A3;color:#fff;font-size:12px;font-weight:700}.rv-bwhy{font-size:12.5px;margin:4px 0}.rv-fchip{display:inline-block;font-size:11.5px;background:#F6F7F5;border:1px solid #E2E8F0;border-radius:6px;padding:2px 6px;margin:2px}.rv-fchip b{margin-right:4px}.rv-bsteps{font-size:12.5px;background:#F6F7F5;border-radius:6px;padding:6px 8px;margin-top:6px}.rv-bsteps ol{margin:4px 0 0;padding-left:18px}.rv-cmp{display:none}`;
 
   function bind() {
     const pick = (id, inp) => { const d = $(id), i = $(inp); if (!d || !i) return;
@@ -643,7 +769,18 @@
   .rv-shotwrap{position:relative;border:1px solid var(--line,#E2E8F0);border-radius:8px;overflow:hidden;margin-bottom:6px}.rv-shotwrap img{display:block;width:100%;height:auto}
   .rv-hot{position:absolute;border:3px solid #DC2626;border-radius:6px;background:rgba(220,38,38,.08)}.rv-hot.medium{border-color:#CA8A04;background:rgba(202,138,4,.08)}.rv-hot.low{border-color:#2563EB;background:rgba(37,99,235,.06)}.rv-hot .rv-pin{position:absolute;top:-10px;left:-10px}
   .rv-cur{width:100%;height:auto;display:block;border-radius:8px;margin-bottom:6px}
-  .rv-wire{border:1px solid var(--line,#E2E8F0);border-radius:10px;overflow:auto;background:#F1F5F9;margin:8px 0}.rv-wire svg{display:block;width:100%;min-width:640px;height:auto}
+  .rv-wire{border:1px solid var(--line,#E2E8F0);border-radius:12px;overflow:auto;background:#F5F7FA;margin:8px 0;box-shadow:0 6px 20px rgba(16,24,38,.06)}.rv-wire svg{display:block;width:100%;min-width:720px;height:auto}
+  .rv-wire .rv-wb{cursor:pointer;transition:opacity .2s}.rv-wire .rv-wb:hover>rect:first-child{stroke:var(--teal,#0E86C9);stroke-width:2}.rv-wire .rv-wb.dim{opacity:.35}
+  .rv-howto{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:8px 0}.rv-howto div{background:var(--teal-tint,#E6F3FA);border-radius:10px;padding:9px 10px;font-size:12.5px;line-height:1.4}.rv-howto b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--teal,#0E86C9);color:#fff;font-size:11px;margin-right:6px}
+  .rv-wmode{display:inline-flex;border:1px solid var(--line,#CBD5E1);border-radius:10px;overflow:hidden;margin:8px 0 2px}.rv-wmode button{border:0;background:transparent;padding:7px 12px;cursor:pointer;font:inherit;font-size:13px;color:inherit}.rv-wmode button.on{background:var(--teal,#0E86C9);color:#fff}
+  .rv-cmp{margin:8px 0}.rv-cmp summary{cursor:pointer;font-weight:600;font-size:13.5px}.rv-cmpg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}.rv-cmpg svg{width:100%;height:auto;display:block;border-radius:8px;border:1px solid var(--line,#E2E8F0)}
+  .rv-bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-top:6px}
+  .rv-bcard{border:1px solid var(--line,#E2E8F0);border-radius:12px;padding:12px;background:var(--paper-raised,#fff);transition:box-shadow .2s,border-color .2s}.rv-bcard.hl{border-color:var(--teal,#0E86C9);box-shadow:0 0 0 3px var(--teal-tint,#E6F3FA)}.rv-bcard.done{opacity:.72}.rv-bcard.done .rv-bnum{background:#15803D}
+  .rv-bhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}.rv-bnum{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--blue,#2856A3);color:#fff;font-size:12px;font-weight:700}.rv-bdone{margin-left:auto;font-size:12.5px;display:flex;align-items:center;gap:4px;cursor:pointer}
+  .rv-bwhy{font-size:13px;margin:4px 0 8px;line-height:1.45}.rv-bf{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.rv-fchip{font-size:12px;background:var(--paper,#F6F7F5);border:1px solid var(--line,#E2E8F0);border-radius:8px;padding:3px 8px}.rv-fchip b{color:var(--teal,#0E86C9);margin-right:5px;font-size:11px;text-transform:uppercase;letter-spacing:.03em}
+  .rv-bsteps{font-size:12.8px;background:var(--paper,#F6F7F5);border-radius:8px;padding:8px 10px}.rv-bsteps ol{margin:6px 0 0;padding-left:18px}.rv-bsteps li{margin:3px 0;line-height:1.4}
+  .rv-bprog{display:inline-block;vertical-align:middle;width:120px;height:8px;border-radius:99px;background:var(--line,#E2E8F0);overflow:hidden;margin:0 8px 0 10px}.rv-bprog i{display:block;height:100%;background:#15803D}
+  @media(max-width:700px){.rv-howto{grid-template-columns:1fr 1fr}.rv-cmpg{grid-template-columns:1fr}}
   .rv-wtabs{display:flex;gap:6px;margin:8px 0}.rv-wtabs button{border:1px solid var(--line,#CBD5E1);background:transparent;border-radius:20px;padding:4px 12px;cursor:pointer;color:inherit;font:inherit;font-size:13px}.rv-wtabs button.on{background:#7C3AED;color:#fff;border-color:#7C3AED}
   .rv-wlist{padding-left:26px;font-size:13.5px;line-height:1.5;margin:10px 0 0}.rv-wlist li{margin-bottom:8px}.rv-wlist li::marker{color:#7C3AED;font-weight:700}.rv-build{font-size:12.5px;color:var(--ink-muted,#475569);background:rgba(124,58,237,.06);border-radius:6px;padding:3px 8px;margin-top:3px;display:inline-block}
   @media(max-width:600px){.rv-score{flex-direction:column;align-items:flex-start}.rv-report{padding:16px}}
