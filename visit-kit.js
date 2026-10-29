@@ -53,6 +53,7 @@
   .vk-btile{cursor:pointer} .vk-btile.on{border-color:#1F9E8B;background:rgba(31,158,139,.08)}
   .vk-modal{max-height:calc(100vh - 32px);overflow-y:auto;position:relative}
   .vk-modal .vk-tabs{display:flex;gap:4px;background:var(--paper,#f3f4f6);border-radius:12px;padding:4px;margin:0 0 16px}
+  .vk-modal .vk-gender{display:flex;gap:8px}.vk-modal .vk-gender label{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;margin:0;padding:10px;border:1px solid var(--line,#ddd);border-radius:10px;cursor:pointer;font-size:14px;color:var(--ink,#111);background:var(--paper,#fafafa)}.vk-modal .vk-gender label.on{border-color:var(--teal,#0E86C9);background:var(--teal-tint,#E6F3FA);font-weight:700}.vk-modal .vk-gender input{width:auto;margin:0;accent-color:var(--teal,#0E86C9)}
   .vk-modal .vk-tabs button{margin:0;flex:1;width:auto;padding:9px 10px;border-radius:9px;background:transparent;color:var(--ink-muted,#5f6368);font-size:14px;font-weight:700}
   .vk-modal .vk-tabs button.on{background:var(--paper-raised,#fff);color:var(--ink,#111);box-shadow:0 1px 3px rgba(0,0,0,.12)}
   .vk-modal .vk-light{font-weight:400;color:var(--ink-muted,#888)} .vk-modal .vk-hint{font-size:12px;margin-top:5px}
@@ -128,6 +129,7 @@
   const errOut = (M, t) => {
     const e = M.$("vk-err"); if (!e) return; e.textContent = t || "";
     if (t && DB_DOWN.test(t)) {
+      try { if (window.KICKOFF_CAST) { const c = document.createElement("div"); c.innerHTML = window.KICKOFF_CAST.dbDown(); e.insertBefore(c.firstChild, e.firstChild); } } catch (x) {}
       const b = document.createElement("button"); b.type = "button"; b.className = "vk-guest"; b.textContent = "Continue without login → (open the site)";
       b.style.cssText = "display:block;width:100%;margin-top:10px;background:transparent;color:inherit;border:1.5px solid currentColor;border-radius:10px;padding:10px;font-weight:700;cursor:pointer";
       b.addEventListener("click", () => { try { sessionStorage.setItem(KEY + "_guest", "1"); } catch (x) {} M.close(); });
@@ -135,6 +137,10 @@
     }
   };
   // mode: "signup" | "login" | "forgot" ; onDone(profileFromServer, token)
+  // gender picks the student's character in the Kick-off story (boy or girl); required on every form
+  const genderField = (v) => `<div class="vk-gender" role="radiogroup" aria-label="Boy or girl"><label class="${v === "m" ? "on" : ""}"><input type="radio" name="vk-gender" value="m" ${v === "m" ? "checked" : ""}> 👦 Boy</label><label class="${v === "f" ? "on" : ""}"><input type="radio" name="vk-gender" value="f" ${v === "f" ? "checked" : ""}> 👧 Girl</label></div>`;
+  const readGender = (ov) => { const r = ov.querySelector('input[name="vk-gender"]:checked'); return r ? r.value : ""; };
+  const wireGender = (ov) => ov.querySelectorAll(".vk-gender input").forEach(i => i.addEventListener("change", () => ov.querySelectorAll(".vk-gender label").forEach(l => l.classList.toggle("on", l.contains(ov.querySelector('input[name="vk-gender"]:checked')))))); 
   function authModal(projects, mode, onDone, opts) {
     opts = opts || {}; const M = modal(false);
     const trainer = `<a href="#" id="vk-trainer">I'm the trainer →</a>`;
@@ -150,13 +156,14 @@
         <label for="vk-name">Full name <span class="vk-light">(as it should appear on your certificate)</span></label><input id="vk-name" type="text" maxlength="48" autocomplete="name" placeholder="e.g. Ajay Sharma" value="${esc(c.name || "")}">
         <label for="vk-email">Email</label><input id="vk-email" type="email" maxlength="254" autocomplete="email" placeholder="you@example.com" value="${esc(c.email || "")}">
         <label for="vk-mob">Mobile number</label><input id="vk-mob" type="tel" inputmode="numeric" maxlength="14" autocomplete="tel" placeholder="10-digit mobile number" value="${esc(c.mobile || "")}">
+        <label>I am <span class="vk-light">(your character in the project story)</span></label>${genderField(c.gender || "")}
         <label for="vk-pass">Password <span class="vk-light">(at least 6 characters)</span></label>${pwField("vk-pass", "Create a password", "new-password")}
         <label for="vk-code">Project code <span class="vk-light">(given by your trainer, e.g. P1426)</span></label>${codeSelect(projects, c.batch || (projects.length === 1 ? projects[0].code : ""))}
         <label for="vk-group">Your group</label><div id="vk-gwrap"></div><div class="vk-light vk-hint" id="vk-ghint"></div>
         <div class="vk-err" id="vk-err" role="alert"></div>
         <button id="vk-go">Create account →</button>
         <small>Already enrolled? <a href="#" data-mode2="login">Log in</a> · Only your trainer sees your details; the full mobile number is never stored. ${trainer}</small></div>`;
-      groupField(M.ov, projects, c.group || ""); M.$("vk-code").addEventListener(projects.length ? "change" : "input", () => groupField(M.ov, projects, ""));
+      groupField(M.ov, projects, c.group || ""); wireGender(M.ov); M.$("vk-code").addEventListener(projects.length ? "change" : "input", () => groupField(M.ov, projects, ""));
       setTimeout(() => (c.name ? M.$("vk-email") : M.$("vk-name")).focus(), 50);
       wire(M, () => {
         const n = M.$("vk-name").value.replace(/\s+/g, " ").trim(); const nn = n === n.toLowerCase() || n === n.toUpperCase() ? n.toLowerCase().replace(/(^|\s)\S/g, (x) => x.toUpperCase()) : n;
@@ -165,14 +172,15 @@
         if (n.length < 2 || !/[a-zA-Zऀ-ॿ]/.test(n)) return errOut(M, "Please enter your full name.");
         if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)) return errOut(M, "Please enter a valid email address.");
         if (!/^[6-9]\d{9}$/.test(mob)) return errOut(M, "Please enter a valid 10-digit mobile number.");
+        const gender = readGender(M.ov); if (!gender) return errOut(M, "Please select Boy or Girl.");
         if (pw.length < 6) return errOut(M, "Password must be at least 6 characters.");
         if (projects.length && !p) return errOut(M, "Please select your project code.");
         if (!projects.length && !/^[A-Za-z0-9-]{2,20}$/.test(codeRaw)) return errOut(M, "Please enter your project code, like P1426.");
         if (g === null || (!g && groupRequired(p))) return errOut(M, "Your project has started, so please select your group.");
         errOut(M, ""); busy(M, true, "Creating your account…");
-        post({ action: "signup", name: nn, email, mobile: mob, password: pw, batch: p ? p.code : normCode(codeRaw), group: g }).then(j => {
+        post({ action: "signup", name: nn, email, mobile: mob, gender, password: pw, batch: p ? p.code : normCode(codeRaw), group: g }).then(j => {
           if (!j || !j.ok) { busy(M, false, "Create account →"); return errOut(M, (j && j.error) || "Could not create the account. Try again."); }
-          profile.mobile = mob; ok(j);
+          profile.mobile = mob; if (j.profile && !j.profile.gender) j.profile.gender = gender; ok(j);
         }).catch(() => { busy(M, false, "Create account →"); errOut(M, "Could not reach the server. Check your internet and try again."); });
       });
     } else if (mode === "login") {
@@ -182,12 +190,13 @@
         <label for="vk-login">Email or mobile number</label><input id="vk-login" type="text" maxlength="254" autocomplete="username" placeholder="you@example.com or 98xxxxxxxx" value="${esc(opts.login || "")}">
         <label for="vk-pass">Password</label>${pwField("vk-pass", "Your password", "current-password")}
         <div class="vk-row"><a href="#" id="vk-forgot">Forgot password?</a></div>
+        <label>I am <span class="vk-light">(your character in the project story)</span></label>${genderField(profile.gender || ls.get(KEY + "_gender") || "")}
         <label for="vk-code">Project code <span class="vk-light">(the project you are attending now)</span></label>${codeSelect(projects, lastCode)}
         <label for="vk-group">Your group</label><div id="vk-gwrap"></div><div class="vk-light vk-hint" id="vk-ghint"></div>
         <div class="vk-err" id="vk-err" role="alert"></div>
         <button id="vk-go">Log in →</button>
         <small>New here? <a href="#" data-mode2="signup">Create an account</a>. ${trainer}</small></div>`;
-      groupField(M.ov, projects, profile.group || ""); M.$("vk-code").addEventListener(projects.length ? "change" : "input", () => groupField(M.ov, projects, ""));
+      groupField(M.ov, projects, profile.group || ""); wireGender(M.ov); M.$("vk-code").addEventListener(projects.length ? "change" : "input", () => groupField(M.ov, projects, ""));
       setTimeout(() => M.$("vk-login").focus(), 50);
       M.$("vk-forgot").addEventListener("click", (e) => { e.preventDefault(); M.close(); authModal(projects, "forgot", onDone, { email: M.$("vk-login").value.includes("@") ? M.$("vk-login").value.trim() : "" }); });
       wire(M, () => {
@@ -197,13 +206,15 @@
         // an old (mobile-only) account has no password yet: try the mobile number first
         if (!pw && /^\D*[6-9](\D*\d){9}\D*$/.test(id)) { busy(M, true, "Checking…"); return post({ action: "login", login: id, password: "-" }).then(j => { busy(M, false, "Log in →"); if (j && j.legacy) { M.close(); return claimModal(projects, onDone, { mobile: id.replace(/\D/g, "").slice(-10), batch: codeRaw || j.batch, group: g || j.group }); } errOut(M, "Enter your password."); }).catch(() => { busy(M, false, "Log in →"); errOut(M, "Could not reach the server."); }); }
         if (!pw) return errOut(M, "Enter your password.");
+        const gender = readGender(M.ov); if (!gender) return errOut(M, "Please select Boy or Girl.");
         if (projects.length && codeRaw && !p) return errOut(M, "Please select your project code.");
         if (g === null) return errOut(M, "Please select your group.");
         errOut(M, ""); busy(M, true, "Logging in…");
-        const body = { action: "login", login: id, password: pw }; if (codeRaw) { body.batch = p ? p.code : normCode(codeRaw); body.group = g || ""; }
+        const body = { action: "login", login: id, password: pw, gender }; if (codeRaw) { body.batch = p ? p.code : normCode(codeRaw); body.group = g || ""; }
         post(body).then(j => {
           if (!j || !j.ok) { busy(M, false, "Log in →"); if (j && j.legacy) { M.close(); return claimModal(projects, onDone, { mobile: id.replace(/\D/g, "").slice(-10), batch: codeRaw || j.batch, group: g || j.group }); } return errOut(M, (j && j.error) || "Could not log in."); }
           if (!id.includes("@")) profile.mobile = id.replace(/\D/g, "").slice(-10);
+          if (j.profile && !j.profile.gender) j.profile.gender = gender; ls.set(KEY + "_gender", gender);
           ok(j);
         }).catch(() => { busy(M, false, "Log in →"); errOut(M, "Could not reach the server. Check your internet and try again."); });
       });
@@ -247,12 +258,13 @@
       <h3 id="vk-t">Welcome back 👋</h3><p><b>We found your old account</b> for mobile ••${esc(String(c.mobile || "").slice(-4))}. You don't need a new account: confirm your name and set a password once. Your project code and group are kept.</p>
       <label for="vk-name">Your name <span class="vk-light">(as you entered it the first time)</span></label><input id="vk-name" type="text" maxlength="48" autocomplete="name" placeholder="e.g. Ajay Sharma">
       <label for="vk-email">Email</label><input id="vk-email" type="email" maxlength="254" autocomplete="email" placeholder="you@example.com">
+        <label>I am <span class="vk-light">(your character in the project story)</span></label>${genderField(c.gender || "")}
       <label for="vk-pass">New password <span class="vk-light">(at least 6 characters)</span></label>${pwField("vk-pass", "Create a password", "new-password")}
       <label for="vk-code">Project code</label>${codeSelect(projects, c.batch || "")}
       <label for="vk-group">Your group</label><div id="vk-gwrap"></div><div class="vk-light vk-hint" id="vk-ghint"></div>
       <div class="vk-err" id="vk-err" role="alert"></div><button id="vk-go">Save & log in →</button>
       <small><a href="#" id="vk-back">← Back to log in</a></small></div>`;
-    groupField(M.ov, projects, c.group || ""); M.$("vk-code").addEventListener(projects.length ? "change" : "input", () => groupField(M.ov, projects, ""));
+    groupField(M.ov, projects, c.group || ""); wireGender(M.ov); M.$("vk-code").addEventListener(projects.length ? "change" : "input", () => groupField(M.ov, projects, ""));
     M.$("vk-back").addEventListener("click", (e) => { e.preventDefault(); M.close(); authModal(projects, "login", onDone, { login: c.mobile }); });
     setTimeout(() => M.$("vk-name").focus(), 50);
     wire(M, () => {
@@ -260,13 +272,14 @@
       const codeRaw = M.$("vk-code").value.trim(), p = findProject(projects, codeRaw), g = readGroup(M.ov);
       if (name.length < 2) return errOut(M, "Please type your name.");
       if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)) return errOut(M, "Please enter a valid email address.");
+      const gender = readGender(M.ov); if (!gender) return errOut(M, "Please select Boy or Girl.");
       if (pw.length < 6) return errOut(M, "Password must be at least 6 characters.");
       if (projects.length && !p) return errOut(M, "Please select your project code.");
       if (g === null || (!g && groupRequired(p))) return errOut(M, "Please select your group.");
       busy(M, true, "Saving…");
-      post({ action: "claim", mobile: c.mobile, name, email, password: pw, batch: p ? p.code : normCode(codeRaw), group: g }).then(j => {
+      post({ action: "claim", mobile: c.mobile, name, email, gender, password: pw, batch: p ? p.code : normCode(codeRaw), group: g }).then(j => {
         if (!j || !j.ok) { busy(M, false, "Save & log in →"); return errOut(M, (j && j.error) || "Could not save."); }
-        profile.mobile = c.mobile; M.close(); onDone(j.profile, j.token);
+        profile.mobile = c.mobile; if (j.profile && !j.profile.gender) j.profile.gender = gender; ls.set(KEY + "_gender", gender); M.close(); onDone(j.profile, j.token);
       }).catch(() => { busy(M, false, "Save & log in →"); errOut(M, "Could not reach the server."); });
     });
   }
@@ -318,7 +331,7 @@
     });
   }
   function applyProfile(pr, token) {
-    if (!pr) return; Object.assign(profile, { name: pr.name, email: pr.email, uid: pr.uid, last4: pr.last4, group: pr.group || NOG, cert: pr.cert || null, kickoff: pr.kickoff || "", meAt: Date.now() });
+    if (!pr) return; Object.assign(profile, { name: pr.name, email: pr.email, uid: pr.uid, last4: pr.last4, gender: pr.gender || profile.gender || ls.get(KEY + "_gender") || "", group: pr.group || NOG, cert: pr.cert || null, kickoff: pr.kickoff || "", meAt: Date.now() });
     if (token) profile.token = token; setBatch(profile, pr.batch); saveMe(profile); ls.set(KEY + "_was_student", "1");
     try { window.dispatchEvent(new Event("vk-account")); } catch (e) {}
   }

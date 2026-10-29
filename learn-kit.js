@@ -120,8 +120,8 @@ body.dark-mode .kl-doc{background:#fbf7ee}
       simple: `A <b>stakeholder register</b> lists everyone involved: their role, what they need and how much they influence decisions. Stakeholders often <b>want different things</b> (here: two definitions of ${esc(D.conflict.kpi)}). Spotting this early prevents fights later.`,
       terms: [["Sponsor", "the senior person who funds the project and signs off"], ["Data owner", "the person responsible for a data source and access to it"], ["End user", "the person who will use the dashboard every day"]],
       sample: { t: "Stakeholder register (simulated)", h: tbl(["Name", "Side", "Role", "Needs", "Influence"], ppl.map(p => [esc(p.name), esc(p.side), esc(p.role), esc(p.needs), esc(p.inf)])) + `<p style="margin-top:8px"><b>Conflict to manage:</b> ${esc(D.user.name)} wants "${esc(D.conflict.a)}"; ${esc(sp.name)} says "${esc(D.conflict.b)}".</p>` },
-      tasks: [{ type: "classify", prompt: "Who needs what? Match each need to the right person.", cats: [sp.name + " (sponsor)", us.name + " (end user)", ow.name + " (data owner)", "Neha (data engineer)"], items: shuffle([[sp.cares, 0], [us.cares, 1], [ow.cares, 2], ["Pipelines, data quality and refresh on time", 3]], 4), hint: "The sponsor decides and signs off; the end user uses the dashboard daily; the data owner looks after the source system.", why: "Knowing each person's need tells you whom to ask, whom to show demos to, and who approves." }],
-      check: ["Who signs off the project scope?", [ow.name + " (data owner)", sp.name + " (sponsor)", "Neha (data engineer)"], 1, "The sponsor approves scope and milestones."],
+      tasks: [{ type: "classify", prompt: "Who needs what? Match each need to the right person.", cats: [sp.name + " (sponsor)", us.name + " (end user)", ow.name + " (data owner)", P.de.short + " (data engineer)"], items: shuffle([[sp.cares, 0], [us.cares, 1], [ow.cares, 2], ["Pipelines, data quality and refresh on time", 3]], 4), hint: "The sponsor decides and signs off; the end user uses the dashboard daily; the data owner looks after the source system.", why: "Knowing each person's need tells you whom to ask, whom to show demos to, and who approves." }],
+      check: ["Who signs off the project scope?", [ow.name + " (data owner)", sp.name + " (sponsor)", P.de.short + " (data engineer)"], 1, "The sponsor approves scope and milestones."],
       pack: () => `<h2>4. Stakeholder register</h2>${tbl(["Name", "Side", "Role", "Needs", "Influence"], ppl.map(p => [esc(p.name), esc(p.side), esc(p.role), esc(p.needs), esc(p.inf)]))}` });
     const goodQ = D.qa.map(q => q[0]).concat(["Who will sign off the KPI definitions and by when?"]);
     const badQ = ["Which chart colours do you like best?", "Can we start building the dashboard today?", "Can you just send all the data you have?"];
@@ -129,10 +129,10 @@ body.dark-mode .kl-doc{background:#fbf7ee}
       beat: [["you", "smile", "point", D.qa[0][0]], [D.qa[0][3] === "ow" ? "ow" : "sp", "think", "idle", D.qa[0][1], "r"]],
       simple: `The kick-off follows an <b>agenda</b>, the BI team asks <b>discovery questions</b>, and someone writes the <b>minutes of meeting (MoM)</b>: decisions, action items, owners and dates. Today that someone is you.`,
       terms: [["Agenda", "the list of topics for the meeting"], ["MoM", "minutes of meeting: decisions + action items + owner + due date"]],
-      sample: { t: "Minutes of meeting (simulated)", h: `<div class="kl-doc"><b>Kick-off: ${esc(D.project)}</b> · ${esc(D.when)}<br><b>Goal:</b> ${esc(D.goal)}<br><br>${tbl(["Action item", "Owner", "Due"], D.actions.map(a => [esc(a[0]), esc(a[1] === "YOU" ? you : a[1]), esc(a[2])]))}</div>` },
+      sample: { t: "Minutes of meeting (simulated)", h: `<div class="kl-doc"><b>Kick-off: ${esc(D.project)}</b> · ${esc(D.when)}<br><b>Goal:</b> ${esc(D.goal)}<br><br>${tbl(["Action item", "Owner", "Due"], D.actions.map(a => [esc(a[0]), esc(a[1] === "YOU" ? you : a[1] === "Neha" ? P.de.short : a[1]), esc(a[2])]))}</div>` },
       tasks: [{ type: "multi", prompt: "Which questions should you ask in a kick-off? Tick all good ones.", options: shuffle(goodQ.map(q => [q, true]).concat(badQ.map(q => [q, false])), 9), hint: "Good kick-off questions clarify the decision, the definitions, the data and who approves. Bad ones jump to design or building.", why: "Good questions remove ambiguity. Colours, starting to build and 'send everything' come later or waste time." }],
       check: ["What MUST minutes of meeting contain?", ["Everyone's opinions", "Decisions, action items, owners and due dates", "Only the date"], 1, "MoM turns talk into commitments: who does what by when."],
-      pack: () => `<h2>5. Minutes of meeting</h2><p><b>${esc(D.when)}</b> · Goal: ${esc(D.goal)}</p>${tbl(["Action item", "Owner", "Due"], D.actions.map(a => [esc(a[0]), esc(a[1] === "YOU" ? you : a[1]), esc(a[2])]))}` });
+      pack: () => `<h2>5. Minutes of meeting</h2><p><b>${esc(D.when)}</b> · Goal: ${esc(D.goal)}</p>${tbl(["Action item", "Owner", "Due"], D.actions.map(a => [esc(a[0]), esc(a[1] === "YOU" ? you : a[1] === "Neha" ? P.de.short : a[1]), esc(a[2])]))}` });
     // 3 ─ Discover
     M.push({ id: "dc", stage: 2, day: "Tuesday · discovery", title: "Discovery: current process, pain points and unknowns",
       beat: [["us", "worry", "cross", D.userPain.replace(/<[^>]+>/g, "")], ["ba", "smile", "note", "Let's write down what is FACT, what is PAIN, and what we still DON'T KNOW.", "r"]],
@@ -238,12 +238,12 @@ body.dark-mode .kl-doc{background:#fbf7ee}
     let speakingGen = 0;
     const doneN = () => M.filter(m => ST.done[m.id]).length;
     function renderTabs() {
-      tabs.innerHTML = `<div class="kl-tabs" role="tablist"><button type="button" role="tab" data-t="story" class="${ST.tab === "story" ? "on" : ""}" aria-selected="${ST.tab === "story"}">🎬 Episode 1: the story</button><button type="button" role="tab" data-t="learn" class="${ST.tab === "learn" ? "on" : ""}" aria-selected="${ST.tab === "learn"}">🧭 Kick-off Playbook <span class="pc">${doneN()}/${M.length}</span></button></div>`;
+      tabs.innerHTML = `<div class="kl-tabs" role="tablist"><button type="button" role="tab" data-t="story" class="${ST.tab === "story" ? "on" : ""}" aria-selected="${ST.tab === "story"}">🎬 Story episodes</button><button type="button" role="tab" data-t="learn" class="${ST.tab === "learn" ? "on" : ""}" aria-selected="${ST.tab === "learn"}">🧭 Kick-off Playbook <span class="pc">${doneN()}/${M.length}</span></button></div>`;
       tabs.querySelectorAll("[data-t]").forEach(b => b.addEventListener("click", () => { ST.tab = b.dataset.t; save(); KIT.hush(); show(); }));
     }
     function show() { if (ST.tab !== "story") deck.dispatchEvent(new CustomEvent("ko:stop")); renderTabs(); deck.hidden = ST.tab !== "story"; host.hidden = ST.tab !== "learn"; if (ST.tab === "learn") render(); }
     function beatHtml(m) {
-      return `<div class="kl-beat">${m.beat.map((b, i) => i === 0 ? `<div class="ch">${KIT.figure(P[b[0]].look, b[1], b[2])}<b>${esc(P[b[0]].short)}</b></div>` : "").join("")}<div class="lines">${m.beat.map(b => `<div class="bb ${b[4] === "r" ? "r" : ""}"><span>${esc(P[b[0]].short)}</span>${esc(b[3])}</div>`).join("")}</div>${m.beat[1] ? `<div class="ch">${KIT.figure(P[m.beat[1][0]].look, m.beat[1][1], m.beat[1][2])}<b>${esc(P[m.beat[1][0]].short)}</b></div>` : ""}${KIT.speechReady() ? `<button type="button" class="lis" aria-label="Listen to this scene">🔊 Listen</button>` : ""}</div>`;
+      return `<div class="kl-beat">${m.beat.map((b, i) => i === 0 ? `<div class="ch" data-who="${esc(b[0])}">${KIT.figure(P[b[0]].look, b[1], b[2])}<b>${esc(P[b[0]].short)}</b></div>` : "").join("")}<div class="lines">${m.beat.map(b => `<div class="bb ${b[4] === "r" ? "r" : ""}"><span>${esc(P[b[0]].short)}</span>${esc(b[3])}</div>`).join("")}</div>${m.beat[1] ? `<div class="ch" data-who="${esc(m.beat[1][0])}">${KIT.figure(P[m.beat[1][0]].look, m.beat[1][1], m.beat[1][2])}<b>${esc(P[m.beat[1][0]].short)}</b></div>` : ""}${KIT.speechReady() ? `<button type="button" class="lis" aria-label="Listen to this scene">🔊 Listen</button>` : ""}</div>`;
     }
     function taskHtml(m, t, ti) {
       const A = (ST.ans[m.id] || {})[ti] || {};
@@ -256,7 +256,7 @@ body.dark-mode .kl-doc{background:#fbf7ee}
         return `<div class="kl-row ${st}"><span>${esc(it[0])}</span><select data-i="${i}" aria-label="Category" ${A.checked && A.ok ? "disabled" : ""}><option value="">Choose…</option>${t.cats.map((c, j) => `<option value="${j}" ${String(v) === String(j) ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>${A.checked && st === "bad" && A.reveal ? `<div class="fx">Correct: ${esc(t.cats[it[1]])}</div>` : ""}</div>`; }).join("");
       else if (t.type === "write") body = `<textarea class="kl-ta" data-key="${t.key}" placeholder="Type here…">${esc(ST.text[t.key] || "")}</textarea>${A.model ? `<div class="kl-fb hint"><b>A good example:</b> ${esc(t.model)}</div>` : ""}`;
       else if (t.type === "sign") body = `<div class="kl-sign">${t.items.map((x, i) => `<label><input type="checkbox" data-s="${i}" ${ST.sign[i] ? "checked" : ""}> ${esc(x)}</label>`).join("")}</div>`;
-      const fb = A.checked ? (A.ok ? `<div class="kl-fb ok">${A.reveal ? "👀 <b>Here is the answer.</b>" : "✅ <b>Correct.</b>"} ${esc(t.why || "")}</div>` : `<div class="kl-fb no">❌ <b>Not yet.</b> ${A.reveal ? esc(t.why || "") : "Some answers are wrong (marked red). Try again, or use the hint."}</div>`) : "";
+      const fb = A.checked ? (A.ok ? `<div class="kl-fb ok">${!A.reveal && window.KICKOFF_CAST ? window.KICKOFF_CAST.cheer() : ""}${A.reveal ? "👀 <b>Here is the answer.</b>" : "✅ <b>Correct.</b>"} ${esc(t.why || "")}</div>` : `<div class="kl-fb no">❌ <b>Not yet.</b> ${A.reveal ? esc(t.why || "") : "Some answers are wrong (marked red). Try again, or use the hint."}</div>`) : "";
       const hint = A.hint && t.hint ? `<div class="kl-fb hint">💡 ${esc(t.hint)}</div>` : "";
       const btns = t.type === "write" ? `<div class="kl-btns"><button type="button" class="kl-btn" data-act="wsave">Save to my Project Pack</button><button type="button" class="kl-btn gh" data-act="model">Show a good example</button></div>`
         : t.type === "sign" ? "" : `<div class="kl-btns">${A.ok ? "" : `<button type="button" class="kl-btn" data-act="check">Check my answer</button>`}${t.hint && !A.hint && !A.ok ? `<button type="button" class="kl-btn gh" data-act="hint">💡 Hint</button>` : ""}${A.checked && !A.ok ? `<button type="button" class="kl-btn gh" data-act="reveal">Show the answer</button>` : ""}</div>`;
@@ -300,8 +300,9 @@ body.dark-mode .kl-doc{background:#fbf7ee}
       const sel = host.querySelector(".kl-mob select"); if (sel) sel.addEventListener("change", () => go(+sel.value));
       host.querySelectorAll("[data-nav]").forEach(b => b.addEventListener("click", () => go(cur + +b.dataset.nav)));
       const lis = host.querySelector(".lis"); if (lis) lis.addEventListener("click", async () => {
-        const g = ++speakingGen; KIT.hush(); lis.textContent = "⏹ Stop"; lis.onclick = () => { speakingGen++; KIT.hush(); lis.textContent = "🔊 Listen"; };
-        for (const b of m.beat) { if (g !== speakingGen) break; await KIT.speak(b[3], b[0], P, b[1] === "angry" ? "shout" : b[1] === "think" ? "think" : "", () => g === speakingGen); }
+        const g = ++speakingGen; KIT.hush(); lis.textContent = "⏹ Stop"; lis.onclick = () => { speakingGen++; KIT.hush(); host.querySelectorAll(".kl-beat .ch.talk").forEach(c => c.classList.remove("talk")); lis.textContent = "🔊 Listen"; };
+        for (const b of m.beat) { if (g !== speakingGen) break; const ch = host.querySelector(`.kl-beat .ch[data-who="${b[0]}"]`); if (ch) ch.classList.add("talk"); await KIT.speak(b[3], b[0], P, b[1] === "angry" ? "shout" : b[1] === "think" ? "think" : "", () => g === speakingGen); if (ch) ch.classList.remove("talk"); }
+        host.querySelectorAll(".kl-beat .ch.talk").forEach(c => c.classList.remove("talk"));
         if (g === speakingGen) lis.textContent = "🔊 Listen";
       });
       const A = ST.ans[m.id] = ST.ans[m.id] || {};
@@ -333,7 +334,7 @@ body.dark-mode .kl-doc{background:#fbf7ee}
     }
     function alertBox(box, msg) { let f = box.querySelector(".kl-fb.tmp"); if (!f) { f = document.createElement("div"); f.className = "kl-fb no tmp"; box.appendChild(f); } f.textContent = "⚠ " + msg; }
     function packHtml() {
-      const who = P.you.name.replace(" (you)", "");
+      const who = P.you.learner || "You";
       return `<!doctype html><html><head><meta charset="utf-8"><title>Project Pack · ${esc(D.project)}</title><style>body{font-family:Calibri,Arial,sans-serif;max-width:820px;margin:24px auto;padding:0 16px;color:#111;line-height:1.5}h1{font-size:24px;margin:0}h2{font-size:17px;margin:22px 0 6px;border-bottom:2px solid #ddd;padding-bottom:3px}table{border-collapse:collapse;width:100%;font-size:12.5px;margin:6px 0}td,th{border:1px solid #ccc;padding:5px;text-align:left;vertical-align:top}th{background:#f2f2f2}code{font-family:Consolas,monospace}.note{background:#fff7e6;border:1px solid #f0d9a8;padding:6px 8px;font-size:12px}</style></head><body>
         <h1>Project Pack: ${esc(D.project)}</h1><p>Prepared by <b>${esc(who === "You" ? "__________" : who)}</b> · Data Analyst / BI Developer · ${new Date().toLocaleDateString("en-IN")}</p>
         <p class="note">Learning document from the Kick-off Playbook. People, meetings and decisions are simulated; KPI names and data sources follow the ${esc(D.project)} capstone project.</p>
