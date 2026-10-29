@@ -202,9 +202,10 @@ const projOf = (projects, code) => projects.find(p => codeN(p.code) === codeN(co
 // group becomes required the day after the project's kick-off meeting
 const kickOf = (p) => String((p && ((p.overrides && p.overrides.kickoff) || p.kickoff)) || "").slice(0, 10);
 const groupRequired = (p) => !!(p && kickOf(p) && istDay() > kickOf(p));
+const genderOf = (x) => x === "f" || x === "m" ? x : "";
 function profileOut(uid, h, projects) {
   const p = projOf(projects, h.batch); let cert = null; try { cert = h.cert ? JSON.parse(h.cert) : null; } catch (e) {}
-  return { uid, name: h.name || "", email: h.email || "", last4: h.last4 || "", group: h.group || NO_GROUP, batch: h.batch || "",
+  return { uid, name: h.name || "", email: h.email || "", last4: h.last4 || "", gender: h.gender === "f" || h.gender === "m" ? h.gender : "", group: h.group || NO_GROUP, batch: h.batch || "",
     needsGroup: !h.group && groupRequired(p), codeOk: !!p || !projects.length, kickoff: kickOf(p), cert };
 }
 async function newSession(env, uid, ver, h, how) {
@@ -265,6 +266,7 @@ async function accounts(env, req, res, b) {
     if (!EMAIL_RE.test(email)) return send(res, 400, { ok: false, field: "email", error: "Please enter a valid email address." });
     if (!/^[6-9]\d{9}$/.test(mob)) return send(res, 400, { ok: false, field: "mobile", error: "Please enter a valid 10-digit mobile number." });
     const pe = pwProblem(b.password); if (pe) return send(res, 400, { ok: false, field: "password", error: pe });
+    const gender = genderOf(b.gender); if (!gender) return send(res, 400, { ok: false, field: "gender", error: "Please select Boy or Girl." });
     const throttle = PFX + "su:" + crypto.createHash("sha256").update(ip).digest("hex").slice(0, 16);
     const [n] = await pipe(env, [["INCR", throttle], ["EXPIRE", throttle, "3600"]]); if (+n > 20) return send(res, 429, { ok: false, error: "Too many sign-ups from this network. Try again later." });
     const projects = await schedProjects(env), p = projOf(projects, batch);
@@ -279,11 +281,11 @@ async function accounts(env, req, res, b) {
     if (h.pw) return send(res, 409, { ok: false, field: "mobile", error: "This mobile number already has an account. Log in, or use 'Forgot password'." });
     if (emOwner && emOwner !== uid) return send(res, 409, { ok: false, field: "email", error: "This email is already registered. Log in, or use 'Forgot password'." });
     const ver = String((+h.ver || 0) + 1), now = String(Date.now());
-    const cmds = [["HSET", UK, "name", name, "email", email, "group", group, "batch", batch, "last4", mob.slice(-4), "pw", pwHash(b.password), "ver", ver, "updated", now], ["HSETNX", UK, "created", now], ["SADD", PFX + "users", uid], ["SET", emKey(email), uid]];
+    const cmds = [["HSET", UK, "name", name, "email", email, "gender", gender, "group", group, "batch", batch, "last4", mob.slice(-4), "pw", pwHash(b.password), "ver", ver, "updated", now], ["HSETNX", UK, "created", now], ["SADD", PFX + "users", uid], ["SET", emKey(email), uid]];
     if (h.email && h.email !== email) cmds.push(["DEL", emKey(h.email)]);
     await pipe(env, cmds);
     const token = await newSession(env, uid, ver, { name, batch, group }, h.name ? "old-account" : "signup");
-    return send(res, 200, { ok: true, token, profile: profileOut(uid, Object.assign({}, h, { name, email, group, batch, last4: mob.slice(-4) }), projects) });
+    return send(res, 200, { ok: true, token, profile: profileOut(uid, Object.assign({}, h, { name, email, gender, group, batch, last4: mob.slice(-4) }), projects) });
   }
   if (b.action === "login") {
     const id = String(b.login || "").trim(); let uid = null;
@@ -305,6 +307,7 @@ async function accounts(env, req, res, b) {
       if (!validGroup(p, group)) return send(res, 400, { ok: false, field: "group", error: "Please select a group from the list." });
       if (batch !== codeN(h.batch) || group !== (h.group || "")) { await redis(env, "HSET", PFX + "u:" + uid, "batch", batch, "group", group, "updated", String(Date.now())); h.batch = batch; h.group = group; }
     }
+    if (genderOf(b.gender) && genderOf(b.gender) !== h.gender) { await redis(env, "HSET", PFX + "u:" + uid, "gender", genderOf(b.gender)); h.gender = genderOf(b.gender); }
     if (+fails) await redis(env, "DEL", F);
     const token = await newSession(env, uid, String(h.ver || "1"), h, "login");
     return send(res, 200, { ok: true, token, profile: profileOut(uid, h, projects) });
@@ -333,7 +336,8 @@ async function accounts(env, req, res, b) {
     if (!group && groupRequired(p)) return send(res, 400, { ok: false, field: "group", error: "Your project has started, so please select your group." });
     if (!validGroup(p, group)) return send(res, 400, { ok: false, field: "group", error: "Please select a group from the list." });
     const ver = String((+h.ver || 0) + 1), now = String(Date.now());
-    await pipe(env, [["HSET", UK, "email", email, "pw", pwHash(b.password), "ver", ver, "batch", batch, "group", group, "updated", now, "claimed", now], ["SADD", PFX + "users", uid], ["SET", emKey(email), uid], ["DEL", F]]);
+    if (genderOf(b.gender)) h.gender = genderOf(b.gender);
+    await pipe(env, [["HSET", UK, "email", email, "pw", pwHash(b.password), "ver", ver, "batch", batch, "group", group, "gender", h.gender || "", "updated", now, "claimed", now], ["SADD", PFX + "users", uid], ["SET", emKey(email), uid], ["DEL", F]]);
     const token = await newSession(env, uid, ver, Object.assign({}, h, { batch, group }), "old-account");
     return send(res, 200, { ok: true, token, profile: profileOut(uid, Object.assign({}, h, { email, batch, group }), projects) });
   }
