@@ -392,17 +392,30 @@ async function trainerAccounts(env, req, res, b) {
   // certsend: issue a certificate to every student enrolled in this project code, then email the ones not emailed yet
   const code = codeN(b.code); if (!code) return send(res, 400, { ok: false, error: "Project code missing" });
   const site = clean(b.site, 80) || "Data Analyst capstone", url = siteUrl(req, b), today = istDay();
-  const list = users.filter(h => codeN(h.batch) === code); if (!list.length) return send(res, 400, { ok: false, error: "No student is enrolled in " + code + " yet." });
+  const gN = (x) => String(x == null ? "" : x).trim().toLowerCase();
+  const wantG = Array.isArray(b.groups) ? b.groups.map(gN) : null, oneG = typeof b.group === "string" ? gN(b.group) : null, uids = Array.isArray(b.uids) ? b.uids.map(String).slice(0, 500) : null;
+  const list = users.filter(h => codeN(h.batch) === code).filter(h => uids ? uids.includes(h.uid) : b.noGroup ? !gN(h.group) || (wantG || []).includes(gN(h.group)) : oneG != null && oneG !== "" ? gN(h.group) === oneG : wantG ? wantG.includes(gN(h.group)) : true);
+  if (!list.length) return send(res, 400, { ok: false, error: uids ? "Student not found in " + code + "." : (oneG || wantG) ? "No student of this group is enrolled in " + code + " yet." : "No student is enrolled in " + code + " yet." });
   const cmds = [], mails = [], mailUids = []; let issued = 0;
+  const names = [];
   list.forEach(h => {
     let cert = null; try { cert = h.cert ? JSON.parse(h.cert) : null; } catch (e) {}
-    if (!cert) { cert = { id: "DA-" + PFX.replace(/[^a-z]/gi, "").slice(0, 4).toUpperCase() + "-" + crypto.randomBytes(4).toString("hex").toUpperCase().slice(0, 7), date: today, code, project: site }; cmds.push(["HSET", PFX + "u:" + h.uid, "cert", JSON.stringify(cert)]); issued++; }
-    if (h.email && !h.certMailed) { mailUids.push(h.uid); mails.push({ to: h.email, subject: `🎓 Your Data Analyst Capstone certificate is ready`, html: mailWrap(`Congratulations, ${escH(h.name)}! 🎉`, `<p>You have completed the <b>${escH(site)}</b> capstone project (${escH(code)}). Your certificate of completion is ready.</p><p><a href="${escH(url)}" style="display:inline-block;background:#4c1d95;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:700">Download my certificate</a></p><p>Log in on the site and open <b>Dexa Coach → My Certificate</b>. Certificate ID: <b>${escH(cert.id)}</b>.</p><p>— Mahendra Singh, Data Analyst Trainer</p>`) }); }
+    if (!cert) { cert = { id: "DA-" + PFX.replace(/[^a-z]/gi, "").slice(0, 4).toUpperCase() + "-" + crypto.randomBytes(4).toString("hex").toUpperCase().slice(0, 7), date: today, code, project: site, group: clean(h.group, 40) }; cmds.push(["HSET", PFX + "u:" + h.uid, "cert", JSON.stringify(cert)]); issued++; }
+    if (h.email && !h.certMailed) {
+      const first = String(h.name || "").trim().split(/\s+/)[0] || "there";
+      mailUids.push(h.uid); names.push(h.name);
+      mails.push({ to: h.email, subject: `🎉 Congratulations ${first}! You have completed the ${site} capstone project`, html: mailWrap(`Congratulations, ${escH(h.name)}! 🎉`,
+        `<p style="font-size:16px;line-height:1.6">You have successfully completed the <b>${escH(site)}</b> Data Analyst capstone project (${escH(code)}${h.group ? ", " + escH(h.group) : ""}) <b>under the guidance of Mahendra Singh</b>.</p>
+        <p style="font-size:15px;line-height:1.6">Well done on the SQL, data modelling, dashboards and the final presentation. This is real project work you can show in interviews.</p>
+        <p style="margin:22px 0"><a href="${escH(url)}" style="display:inline-block;background:#4c1d95;color:#fff;padding:13px 22px;border-radius:9px;text-decoration:none;font-weight:700">🎓 Download my certificate</a></p>
+        <p style="font-size:14px;color:#475569">Log in on the site and open <b>Dexa Coach → My Certificate</b>. Certificate ID: <b>${escH(cert.id)}</b>. Add it to LinkedIn under <i>Licenses &amp; certifications</i>.</p>
+        <p style="font-size:15px">All the best for your Data Analyst career!<br><b>Mahendra Singh</b><br><span style="color:#6b7280">Data Analyst Trainer</span></p>`) });
+    }
   });
   if (cmds.length) await pipe(env, cmds);
   let emailed = 0, mailError = "";
   if (mails.length) { const r = await mailSend(mails); if (r.ok) { emailed = mails.length; await pipe(env, mailUids.map(u => ["HSET", PFX + "u:" + u, "certMailed", String(Date.now())])); } else mailError = r.error === "no_key" ? "Email is not set up (RESEND_API_KEY missing), so students see the certificate on the site after logging in." : r.error; }
-  return send(res, 200, { ok: true, total: list.length, issued, emailed, noEmail: list.filter(h => !h.email).length, mailError });
+  return send(res, 200, { ok: true, total: list.length, issued, emailed, names: emailed ? names : [], noEmail: list.filter(h => !h.email).length, noEmailNames: list.filter(h => !h.email).map(h => h.name).slice(0, 30), mailError });
 }
 
 /* trainer: which database is in use, and copy the old database (Upstash / Redis) into Supabase, one page of keys per call */
@@ -456,8 +469,8 @@ module.exports = async function handler(req, res) {
     if (req.method === "GET") {
       const q = new URL(req.url, "http://x").searchParams;
       if (q.get("stats")) {
-        const d = istDay(); const [u, t, v] = await pipe(env, [["PFCOUNT", PFX + "v:all"], ["PFCOUNT", PFX + "v:day:" + d], ["GET", PFX + "views"]]);
-        return send(res, 200, { unique: +u || 0, today: +t || 0, views: +v || 0, day: d }, 900);
+        const d = istDay(); const [u, t, v, st] = await pipe(env, [["PFCOUNT", PFX + "v:all"], ["PFCOUNT", PFX + "v:day:" + d], ["GET", PFX + "views"], ["SCARD", PFX + "users"]]);
+        return send(res, 200, { unique: +u || 0, today: +t || 0, views: +v || 0, students: +st || 0, day: d }, 300);   // students = unique accounts (logged-in students)
       }
       let v = await redis(env, "GET", KEY_DATA);
       if (!v) { const o = await oldDb(env, [["GET", KEY_DATA]]); if (o && o[0]) { v = o[0]; try { await redis(env, "SET", KEY_DATA, v); } catch (e) {} } }
