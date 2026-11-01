@@ -2341,6 +2341,16 @@ function schIdle() {   // trainer is not in the middle of typing / a form
   return !(a && root && root.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName));
 }
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && SCH_API && Date.now() - schLastLoad > 30000 && (!schIsTrainer() || schIdle())) schLoadRemote(true); });
+/* light re-render: never rebuild the schedule while the trainer is still clicking / typing in it (that was the lag) */
+let schSoftT = 0;
+function schSoftRender(delay) {
+  clearTimeout(schSoftT);
+  schSoftT = setTimeout(function go() {
+    if (!schIdle() || schSaveTimer) { schSoftT = setTimeout(go, 1200); return; }
+    schSoftT = 0; try { renderSchedule(); renderHeroSchedule(); } catch (e) {}
+  }, delay == null ? 1500 : delay);
+}
+function schChanged() { try { window.dispatchEvent(new Event("sch-changed")); } catch (e) {} }
 function schApi(payload) { return fetch(SCH_API, { method: "POST", body: JSON.stringify(payload) }).then(r => r.json()); }
 function schLoadRemote(silent) {
   if (!SCH_API) return Promise.resolve();
@@ -2362,7 +2372,7 @@ function schPushRemote(d) {
       let out = d;
       if (latest && Array.isArray(latest.projects)) {
         out = schMergeDocs(schBase, d, latest);
-        if (schJ(out.projects) !== schJ(d.projects)) { schRemote = out; setTimeout(() => { try { renderSchedule(); renderHeroSchedule(); } catch (e) {} }, 0); }
+        if (schJ(out.projects) !== schJ(d.projects)) { schRemote = out; schSoftRender(300); schChanged(); }
       }
       return schApi({ action: "save", pin, data: out }).then(j => { if (j && j.ok) schBase = schClone(out); return j; });
     }).then(j => {
@@ -2642,7 +2652,8 @@ function schLoginDialog() {
 window.schTrainerLogin = schLoginDialog;
 function schBind(d, p) {
   const $ = (id) => document.getElementById(id);
-  const save = () => { if (p) { p.time = schTimeLabel(p); p.updated = new Date().toISOString(); } schSaveDraft(d); renderSchedule(); renderHeroSchedule(); };
+  const save = () => { if (p) { p.time = schTimeLabel(p); p.updated = new Date().toISOString(); } schSaveDraft(d); renderSchedule(); renderHeroSchedule(); schChanged(); };
+  const saveQ = () => { if (p) p.updated = new Date().toISOString(); schSaveDraft(d); schChanged(); schSoftRender(); };   // status / notes: save quietly, keep the page still
   const selEl = $("sch-select");
   if (selEl) selEl.addEventListener("change", () => { lsSet(SCH_VIEW, selEl.value); renderSchedule(); renderHeroSchedule(); });
   document.querySelectorAll("#sch-root [data-bcode]").forEach(r => r.addEventListener("click", () => {
@@ -2674,11 +2685,11 @@ function schBind(d, p) {
   document.querySelectorAll("[data-over]").forEach(i => i.addEventListener("change", () => { p.overrides = p.overrides || {}; p.overrides[i.dataset.over] = i.value; save(); }));
   on("sch-clearover", "click", () => { p.overrides = {}; save(); });
   const gst = (gid) => { p.status = p.status || {}; p.status[gid] = p.status[gid] || {}; return p.status[gid]; };
-  document.querySelectorAll("[data-st]").forEach(s => s.addEventListener("change", () => { const [gid, key] = s.dataset.st.split("|"); gst(gid)[key] = s.value; save(); }));
-  document.querySelectorAll("[data-qaw]").forEach(s => s.addEventListener("change", () => { gst(s.dataset.qaw).sqlqaWeek = s.value; save(); }));
-  document.querySelectorAll("[data-gnote]").forEach(s => s.addEventListener("change", () => { gst(s.dataset.gnote).note = s.value; save(); }));
-  document.querySelectorAll("[data-gname]").forEach(s => s.addEventListener("change", () => { p.groups.find(g => g.id === s.dataset.gname).name = s.value; save(); }));
-  document.querySelectorAll("[data-gmem]").forEach(s => s.addEventListener("change", () => { p.groups.find(g => g.id === s.dataset.gmem).members = s.value; save(); }));
+  document.querySelectorAll("[data-st]").forEach(s => s.addEventListener("change", () => { const [gid, key] = s.dataset.st.split("|"); gst(gid)[key] = s.value; s.className = "st-sel " + ((SCH_ST[s.value] || [])[2] || ""); saveQ(); }));
+  document.querySelectorAll("[data-qaw]").forEach(s => s.addEventListener("change", () => { gst(s.dataset.qaw).sqlqaWeek = s.value; saveQ(); }));
+  document.querySelectorAll("[data-gnote]").forEach(s => s.addEventListener("change", () => { gst(s.dataset.gnote).note = s.value; saveQ(); }));
+  document.querySelectorAll("[data-gname]").forEach(s => s.addEventListener("change", () => { p.groups.find(g => g.id === s.dataset.gname).name = s.value; saveQ(); }));
+  document.querySelectorAll("[data-gmem]").forEach(s => s.addEventListener("change", () => { p.groups.find(g => g.id === s.dataset.gmem).members = s.value; saveQ(); }));
   document.querySelectorAll("[data-gdel]").forEach(b => b.addEventListener("click", () => { if (!confirm("Remove this group?")) return; p.groups = p.groups.filter(g => g.id !== b.dataset.gdel); if (p.status) delete p.status[b.dataset.gdel]; save(); }));
   on("sch-addg", "click", () => { const n = (p.groups || []).length + 1; let id = "g" + n; while (p.groups.some(g => g.id === id)) id += "x"; p.groups.push({ id, name: "Group " + n, members: "" }); save(); });
   on("sch-reset", "click", () => { if (confirm("Reset every group's status to Pending for " + p.code + "?")) { p.status = {}; save(); } });

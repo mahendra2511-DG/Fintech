@@ -183,11 +183,11 @@
     const C = certState(), m = C.m || {};
     const prep = [["review", "🧪", "Get your dashboard evaluated"], ["editor", "⌨️", "Practise SQL problems"]].filter(([v]) => $("view-" + v)).concat([["", "🎤", "Do a mock viva (tab above)"]]);
     return `<div class="ck-grid"><div class="card ck-card">
-      ${C.cert ? `<h3>🎉 Your certificate is ready</h3><p class="ck-sub">Congratulations, <b>${esc(m.name)}</b>! Your trainer issued your Data Analyst Capstone certificate on ${esc(fmtDay(C.cert.date))}.</p>
+      ${C.cert ? `<h3>🎉 Your certificate is ready</h3><p class="ck-sub">Congratulations, <b>${esc(m.name)}</b>! You completed the project under the guidance of Mahendra Singh. Your certificate was issued on ${esc(fmtDay(C.cert.date))}.</p>
         <ul class="ck-crit"><li class="ok"><span class="ck-ic">🎓</span><div><b>Certificate ID ${esc(C.cert.id)}</b><div class="ck-sub">Project ${esc(C.cert.code || m.batch || "")}</div></div></li></ul>
         <p class="ck-tip">Download it as PNG, or print / save it as PDF. Add it to your LinkedIn profile under Licenses & certifications.</p>`
       : !C.auth ? `<h3>Log in to see your certificate</h3><p class="ck-sub">Certificates are linked to your account.</p><button type="button" class="btn-blue" id="ck-login">Log in / Create account</button>`
-      : `<h3>Your certificate is on its way</h3><p class="ck-sub">When your project is complete (after the Final presentation), your trainer sends the <b>Data Analyst Capstone certificate</b> to everyone enrolled in <b>${esc(m.batch || "your project")}</b>. It appears here and is emailed to <b>${esc(m.email || "your email")}</b>.</p>
+      : `<h3>Your certificate is on its way</h3><p class="ck-sub">As soon as your group's Final presentation is marked Done, your trainer sends your <b>Data Analyst Capstone certificate</b> (${esc(m.batch || "your project")}${m.group ? ", " + esc(m.group) : ""}). It appears here and is emailed to <b>${esc(m.email || "your email")}</b>.</p>
         <ul class="ck-crit"><li class="ok"><span class="ck-ic">✅</span><div><b>Enrolled</b><div class="ck-sub">${esc(m.name || "")} · ${esc(m.batch || "")}</div></div></li><li><span class="ck-ic">⏳</span><div><b>Certificate sent by your trainer</b><div class="ck-sub">Not yet. <a href="#" id="ck-recheck">Check again</a></div></div></li></ul>
         <h4>Get presentation-ready meanwhile</h4><ul class="ck-list">${prep.map(([v, ic, t]) => `<li>${ic} ${v ? `<a href="#" data-go="${v}">${t}</a>` : t}</li>`).join("")}</ul>
         <p class="ck-tip">Name spelled wrong? Fix it from <b>account</b> (your name in the sidebar) before your trainer sends the certificates.</p>`}
@@ -249,7 +249,7 @@
     // body
     x.fillStyle = "#4A4560"; x.font = `500 30px ${F.sans}`;
     const proj = C.cert.project || P.name;
-    wrap(`For successfully completing the ${proj} Data Analyst capstone project${C.cert.code ? ` (${C.cert.code})` : ""}, applying SQL, data modelling, dashboard design and business storytelling to a real-world business problem.`, W / 2, 978, 1220, 46);
+    wrap(`For successfully completing the ${proj} Data Analyst capstone project${C.cert.code ? ` (${C.cert.code})` : ""} under the guidance of Mahendra Singh, applying SQL, data modelling, dashboard design and business storytelling to a real-world business problem.`, W / 2, 978, 1220, 46);
     // signatures + seal
     const L = 520, R = W - 520, LY = 1222;
     x.fillStyle = INK; x.font = `400 76px ${F.script}`; x.fillText("Mahendra Singh", L, LY - 22);

@@ -69,6 +69,22 @@
   .vk-acc .vk-cc b{font-size:15px} .vk-acc .vk-cc .st{margin:4px 0 10px;color:var(--ink-muted,#666)} .vk-acc .vk-cc .st.ok{color:#15803D;font-weight:600}
   .vk-acc .vk-cc button{width:100%;padding:9px;border-radius:9px;border:0;background:#5B21B6;color:#fff;font-weight:700;cursor:pointer;font-size:13.5px}
   .vk-acc .vk-cc button[disabled]{background:#CBD5E1;color:#475569;cursor:not-allowed}
+  .vk-acc .vk-grp{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px dashed var(--line,#e6e6e2);font-size:12.5px}
+  .vk-acc .vk-grp .gn{flex:1;min-width:0}.vk-acc .vk-grp .gn b{font-size:13px}.vk-acc .vk-grp .gs{display:block;color:var(--ink-muted,#666)}
+  .vk-acc .vk-grp .gs.ok{color:#15803D;font-weight:600}
+  .vk-acc .vk-grp button{width:auto;padding:6px 10px;font-size:12.5px;white-space:nowrap}
+  .vk-acc .vk-cc .vk-all{margin-top:10px}
+  .vk-acc .vk-one{padding:3px 8px;border-radius:7px;border:0;background:#5B21B6;color:#fff;cursor:pointer;font-size:12px;font-weight:700}
+  .vk-congrats{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.55)}
+  .vk-congrats .box{position:relative;max-width:460px;width:100%;background:#fff;color:#1f1b2e;border-radius:18px;padding:30px 24px 22px;text-align:center;box-shadow:0 24px 60px -20px rgba(0,0,0,.5);overflow:hidden}
+  .vk-congrats .big{font-size:52px;line-height:1}.vk-congrats h2{margin:10px 0 6px;font-size:24px;color:#4c1d95}.vk-congrats p{margin:6px 0;font-size:15.5px;line-height:1.55;color:#334155}
+  .vk-congrats .by{font-size:13px;color:#6d28d9;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-top:12px}
+  .vk-congrats .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+  .vk-congrats .row button{padding:11px 18px;border-radius:10px;border:0;font-weight:700;cursor:pointer;font-size:14.5px}
+  .vk-congrats .go{background:#5B21B6;color:#fff}.vk-congrats .later{background:#EEF2FF;color:#3730a3}
+  .vk-congrats i{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;opacity:.9;animation:vkfall 2.8s linear infinite}
+  @keyframes vkfall{to{transform:translateY(560px) rotate(540deg)}}
+  @media (prefers-reduced-motion:reduce){.vk-congrats i{display:none}}
   .vk-acc .vk-mini{padding:4px 9px;border-radius:7px;border:1px solid var(--line,#ddd);background:var(--paper-raised,#fff);color:var(--ink,#111);cursor:pointer;font-size:12px}
   .vk-acc .vk-note{font-size:13px;padding:10px 12px;border-radius:9px;margin:8px 0;background:#F5F3FF;border:1px solid #DDD6FE}
   .vk-acc .vk-note.err{background:#FEF2F2;border-color:#FECACA;color:#991B1B}
@@ -84,6 +100,7 @@
   function findProject(projects, code) { const c = normCode(code); return projects.find(p => normCode(p.code) === c) || null; }
 
   window.addEventListener("hub-trainer", () => setTimeout(() => { try { trainerWatch(); } catch (e) {} }, 100));
+  let schChT = 0; window.addEventListener("sch-changed", () => { clearTimeout(schChT); schChT = setTimeout(() => { try { if (accs && document.getElementById("vk-acc")) renderAccounts(); } catch (e) {} }, 900); });
   /* ---------- accounts: create account / log in / forgot password / mandatory group ---------- */
   const NOG = "";                                    // group not assigned yet
   const todayIST = () => new Date(Date.now() + 330 * 60000).toISOString().slice(0, 10);
@@ -334,6 +351,26 @@
     if (!pr) return; Object.assign(profile, { name: pr.name, email: pr.email, uid: pr.uid, last4: pr.last4, gender: pr.gender || profile.gender || ls.get(KEY + "_gender") || "", group: pr.group || NOG, cert: pr.cert || null, kickoff: pr.kickoff || "", meAt: Date.now() });
     if (token) profile.token = token; setBatch(profile, pr.batch); saveMe(profile); ls.set(KEY + "_was_student", "1");
     try { window.dispatchEvent(new Event("vk-account")); } catch (e) {}
+    try { setTimeout(congrats, 600); } catch (e) {}
+  }
+  function congrats() {
+    const c = profile && profile.cert; if (!c || !c.id || ss(UNLOCK) === "1") return;
+    const seen = KEY + "_congrats_" + c.id; if (ls.get(seen) === "1" || document.querySelector(".vk-congrats")) return;
+    const first = String(profile.name || "").trim().split(/\s+/)[0] || "there", proj = c.project || siteName();
+    const cols = ["#7C3AED", "#F59E0B", "#10B981", "#EF4444", "#3B82F6", "#EC4899"];
+    const ov = document.createElement("div"); ov.className = "vk-congrats"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true"); ov.setAttribute("aria-label", "Congratulations");
+    ov.innerHTML = `<div class="box">${Array.from({ length: 26 }, (_, i) => `<i style="left:${(i * 37) % 100}%;background:${cols[i % 6]};animation-delay:${(i % 9) * .25}s"></i>`).join("")}
+      <div class="big">🎉</div><h2>Congratulations, ${esc(first)}!</h2>
+      <p><b>${esc(profile.name || "")}</b>, you have successfully completed the <b>${esc(proj)}</b> Data Analyst capstone project${c.code ? ` (${esc(c.code)})` : ""}${c.group ? `, ${esc(c.group)}` : ""}.</p>
+      <p>Your certificate of completion is ready. Certificate ID <b>${esc(c.id)}</b>.</p>
+      <div class="by">Under the guidance of Mahendra Singh</div>
+      <div class="row"><button type="button" class="go">🎓 View my certificate</button><button type="button" class="later">Close</button></div></div>`;
+    document.body.appendChild(ov); ls.set(seen, "1");
+    const close = () => ov.remove();
+    ov.querySelector(".later").onclick = close; ov.addEventListener("click", (e) => { if (e.target === ov) close(); });
+    document.addEventListener("keydown", function k(e) { if (e.key === "Escape") { close(); document.removeEventListener("keydown", k); } });
+    ov.querySelector(".go").onclick = () => { close(); try { if (typeof window.switchView === "function") window.switchView("coach"); } catch (e) {} setTimeout(() => { const t = document.querySelector('#coach-root [data-tab="cert"]'); if (t) t.click(); }, 350); };
+    ov.querySelector(".go").focus();
   }
   function logout(projects) {
     const t = profile.token; if (t) post({ action: "logout", token: t }).catch(() => {});
@@ -424,7 +461,7 @@
   /* ---------- trainer report ---------- */
   let report = null, rState = { q: "", batch: "All", group: "All", today: false, sort: "last", days: 30 };
   const pl = (p) => { try { if (typeof VIEW_LABELS === "object" && VIEW_LABELS[p]) return VIEW_LABELS[p]; } catch (e) {} return p === "overview" ? "Home" : p; };
-  const dt = (t) => t ? new Date(t).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
+  let DTF = null; const dt = (t) => { if (!t) return "—"; try { DTF = DTF || new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }); return DTF.format(new Date(t)); } catch (e) { return new Date(t).toLocaleString(); } };
   function merged() {
     const by = {};
     (report.students || []).forEach(s => {
@@ -518,10 +555,20 @@
   function renderAccounts() {
     const box = document.getElementById("vk-acc"); if (!box || !accs) return;
     const projects = liveProjects(); const fmtD = (d) => { try { return new Date(d + "T12:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }); } catch (e) { return d; } };
-    const cards = projects.map(p => { const c = projComplete(p); const list = accs.filter(a => normCode(a.batch) === normCode(p.code)); const got = list.filter(a => a.cert).length, mailed = list.filter(a => a.mailed).length; const pend = list.filter(a => !a.cert || (a.email && !a.mailed)).length;
+    // certificates per group: a group whose Final presentation is Done can get its certificates now, even if other groups present later
+    const finDone = (p, gname) => { const g = (p.groups || []).find(x => String(x.name || "").trim() === String(gname || "").trim()); return !!(g && ((p.status || {})[g.id] || {}).final === "done"); };
+    const sentAll = (L) => L.length && L.every(a => a.cert && (!a.email || a.mailed));
+    const toSend = (L) => L.filter(a => !a.cert || (a.email && !a.mailed));
+    const cards = projects.map(p => { const c = projComplete(p); const list = accs.filter(a => normCode(a.batch) === normCode(p.code)); const got = list.filter(a => a.cert).length, mailed = list.filter(a => a.mailed).length;
+      const rows = !list.length ? "" : (p.groups || []).map(g => { const L = list.filter(a => String(a.group || "").trim() === String(g.name || "").trim()), ok = finDone(p, g.name) || c.done, pend = toSend(L);
+        return `<div class="vk-grp"><span class="gn"><b>${esc(g.name)}</b> · ${L.length} student${L.length === 1 ? "" : "s"}<span class="gs ${ok ? "ok" : ""}">${finDone(p, g.name) ? "✅ Final done" : c.done ? "✅ Project complete" : "⏳ Final not done yet"}${L.some(a => a.cert) ? ` · 🎓 ${L.filter(a => a.cert).length} issued` : ""}</span></span>
+          <button type="button" data-certg="${esc(p.code)}" data-g="${esc(g.name)}" ${ok && pend.length ? "" : "disabled"} title="${ok ? "" : "Mark this group's Final presentation as Done in the schedule above"}">${!L.length ? "No students" : !ok ? "🔒 After Final" : !pend.length ? "✓ Sent" : `🎓 Send to ${pend.length}`}</button></div>`; }).join("");
+      const noG = list.filter(a => !String(a.group || "").trim() || !(p.groups || []).some(g => String(g.name || "").trim() === String(a.group || "").trim()));
+      const ready = list.filter(a => finDone(p, a.group) || c.done), readyPend = toSend(ready);
       return `<div class="vk-cc"><b>${esc(p.code)}</b> · ${list.length} enrolled
         <div class="st ${c.done ? "ok" : ""}">${c.done ? "✅ Project complete" : `⏳ In progress${c.fin ? ` · Final presentation ${esc(fmtD(c.fin))}` : ""}`}${got ? ` · 🎓 ${got} issued${mailed ? `, ${mailed} emailed` : ""}` : ""}</div>
-        <button type="button" data-cert="${esc(p.code)}" ${c.done && pend ? "" : "disabled"} title="${c.done ? "" : "Unlocks when every group's Final presentation is marked Done, or after the Final presentation date"}">${!c.done ? "🔒 Send certificates (after the Final)" : !list.length ? "No students enrolled yet" : !pend ? `✓ Sent to all ${list.length}` : got ? `🎓 Send to ${pend} new / not emailed` : `🎓 Send certificates to all ${list.length}`}</button></div>`; }).join("");
+        ${rows}${list.length && noG.length ? `<div class="vk-grp"><span class="gn"><b>No group</b> · ${noG.length}<span class="gs">${c.done ? "Project complete" : "Use the Send button next to the student below"}</span></span><button type="button" data-certg="${esc(p.code)}" data-g="" ${c.done && toSend(noG).length ? "" : "disabled"}>${!toSend(noG).length && noG.length ? "✓ Sent" : c.done ? `🎓 Send to ${toSend(noG).length}` : "🔒 After Final"}</button></div>` : ""}
+        <button type="button" class="vk-all" data-cert="${esc(p.code)}" ${readyPend.length ? "" : "disabled"}>${!list.length ? "No students enrolled yet" : sentAll(list) ? `✓ Sent to all ${list.length}` : readyPend.length ? `🎓 Send to every finished group (${readyPend.length})` : "🔒 Unlocks when a group's Final is Done"}</button></div>`; }).join("");
     const stOf = (a) => a.checkin ? "Check-in only" : a.hasPw ? "Active" : "Old – no password yet";
     const all = accs.map(a => Object.assign({}, a, { status: stOf(a) })).concat(accCheck.map(c => Object.assign({ uid: "", email: "", created: c.first, lastLogin: c.last, logins: 0, checkin: true }, c, { status: "Check-in only" })));
     const codes = ["All", ...new Set(all.map(a => normCode(a.batch) || "—"))], grps = ["All", ...new Set(all.map(a => a.group || "—"))].sort((x, y) => x === "All" ? -1 : y === "All" ? 1 : x.localeCompare(y, undefined, { numeric: true }));
@@ -537,7 +584,7 @@
       <p class="vk-light" style="margin:6px 0 0">Old students log in with their old mobile number and set a password once; they never need a new account. Showing ${rows.length}.</p>
       <div class="vk-wrap"><table class="vk-table"><thead><tr><th>Student</th><th>Email</th><th>Mobile</th><th>Project code</th><th>Group</th><th>Status</th><th>Enrolled</th><th>Last login</th><th>Logins</th><th>Certificate</th><th>Password</th></tr></thead><tbody>
       ${rows.length ? rows.map(a => `<tr><td><b>${esc(a.name)}</b></td><td>${esc(a.email || "—")}</td><td>${a.last4 ? "••" + esc(a.last4) : "—"}</td><td>${esc(a.batch || "—")}</td><td>${a.group ? esc(a.group) : '<span class="vk-no">not assigned</span>'}</td><td>${a.status === "Active" ? "🟢 Active" : a.checkin ? '<span class="vk-no">Check-in only</span>' : '<span class="vk-no">🟡 Old – no password yet</span>'}</td><td>${a.created ? dt(a.created) : "—"}</td><td>${a.lastLogin ? dt(a.lastLogin) : "—"}</td><td>${a.logins || (a.checkin ? "—" : 0)}</td>
-        <td>${a.cert ? `🎓 ${esc(a.cert.id)}${a.mailed ? " · ✉️" : ""}` : '<span class="vk-no">—</span>'}</td>
+        <td>${a.cert ? `🎓 ${esc(a.cert.id)}${a.mailed ? " · ✉️" : a.email ? ` <button class="vk-one" data-cert1="${esc(a.uid)}" data-n="${esc(a.name)}" data-c="${esc(a.batch || "")}" data-g="${esc(a.group || "")}">Email</button>` : ""}` : a.checkin ? '<span class="vk-no">—</span>' : `<button class="vk-one" data-cert1="${esc(a.uid)}" data-n="${esc(a.name)}" data-c="${esc(a.batch || "")}" data-g="${esc(a.group || "")}">🎓 Send</button>`}</td>
         <td>${a.checkin ? '<span class="vk-no">—</span>' : a.hasPw ? `<button class="vk-mini" data-reset="${esc(a.uid)}" data-n="${esc(a.name)}">Reset</button>` : '<span class="vk-no" title="Checked in before passwords; they set one with Create account">not set</span>'}</td></tr>`).join("")
         : `<tr><td colspan="11" style="color:var(--ink-muted,#888);padding:16px;">No accounts yet. Students appear here after they enroll on the site.</td></tr>`}</tbody></table></div>`;
     const aq = box.querySelector("#vk-aq"); aq.addEventListener("input", (e) => { accState.q = e.target.value; const pos = e.target.selectionStart; renderAccounts(); const n = document.getElementById("vk-aq"); n.focus(); n.setSelectionRange(pos, pos); });
@@ -550,14 +597,29 @@
       const l = document.createElement("a"); l.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv" })); l.download = "students-" + todayIST() + ".csv"; document.body.appendChild(l); l.click(); l.remove();
     });
     box.querySelector("#vk-aref").addEventListener("click", () => { accMsg = ""; loadAccounts(); });
-    box.querySelectorAll("[data-cert]").forEach(b => b.addEventListener("click", () => {
-      const code = b.dataset.cert; const n = accs.filter(a => normCode(a.batch) === normCode(code)).length;
-      if (!confirm(`Send the Data Analyst Capstone certificate to all ${n} students enrolled in ${code}?\n\nEach student gets an email with a link, and can download the certificate after logging in.`)) return;
+    const sendCerts = (b, body, ask) => {
+      if (!confirm(ask)) return;
       b.disabled = true; b.textContent = "Sending…";
-      post({ action: "certsend", pin: ss(PINK) || "", code, site: siteName() }).then(j => {
-        accMsg = j && j.ok ? `✅ ${esc(code)}: ${j.issued} new certificate${j.issued === 1 ? "" : "s"} issued (${j.total} enrolled), ${j.emailed} email${j.emailed === 1 ? "" : "s"} sent${j.noEmail ? `, ${j.noEmail} without email` : ""}.${j.mailError ? ` <br>⚠ Email: ${esc(j.mailError)}` : ""}` : `⚠ ${esc((j && j.error) || "Could not send.")}`;
+      post(Object.assign({ action: "certsend", pin: ss(PINK) || "", site: siteName() }, body)).then(j => {
+        accMsg = j && j.ok ? `✅ ${j.issued} new certificate${j.issued === 1 ? "" : "s"} issued, ${j.emailed} congratulations email${j.emailed === 1 ? "" : "s"} sent${j.names && j.names.length ? `: ${esc(j.names.slice(0, 12).join(", "))}${j.names.length > 12 ? " +" + (j.names.length - 12) : ""}` : ""}.${j.noEmailNames && j.noEmailNames.length ? `<br>No email on file for ${esc(j.noEmailNames.join(", "))}: they see the certificate and a congratulations message when they log in.` : ""}${j.mailError ? ` <br>⚠ Email: ${esc(j.mailError)}` : ""}` : `⚠ ${esc((j && j.error) || "Could not send.")}`;
         loadAccounts();
       }).catch(() => { accMsg = "⚠ Could not reach the server."; renderAccounts(); });
+    };
+    const projOf = (code) => liveProjects().find(p => normCode(p.code) === normCode(code));
+    box.querySelectorAll("[data-cert]").forEach(b => b.addEventListener("click", () => {
+      const code = b.dataset.cert, p = projOf(code), c = p ? projComplete(p) : { done: false };
+      const groups = p ? (p.groups || []).filter(g => c.done || ((p.status || {})[g.id] || {}).final === "done").map(g => g.name) : [];
+      const n = accs.filter(a => normCode(a.batch) === normCode(code) && (c.done || groups.includes(String(a.group || "").trim())) && (!a.cert || (a.email && !a.mailed))).length;
+      sendCerts(b, { code, groups: c.done ? null : groups, all: c.done }, `Send the Data Analyst Capstone certificate to ${n} student${n === 1 ? "" : "s"} of ${code} (${c.done ? "all groups" : groups.join(", ")})?\n\nEach student gets a congratulations email with their name and a link to download the certificate.`);
+    }));
+    box.querySelectorAll("[data-certg]").forEach(b => b.addEventListener("click", () => {
+      const code = b.dataset.certg, g = b.dataset.g;
+      sendCerts(b, { code, group: g, noGroup: !g }, `Send certificates to ${g || "students without a group"} of ${code}?\n\nEach student gets a congratulations email with their name.`);
+    }));
+    box.querySelectorAll("[data-cert1]").forEach(b => b.addEventListener("click", () => {
+      const p = projOf(b.dataset.c), g = (p && (p.groups || []).find(x => String(x.name || "").trim() === String(b.dataset.g || "").trim())) || null;
+      const fin = p && (projComplete(p).done || (g && ((p.status || {})[g.id] || {}).final === "done"));
+      sendCerts(b, { code: b.dataset.c, uids: [b.dataset.cert1] }, `${fin ? "" : "⚠ " + (b.dataset.g || "This student's group") + "'s Final presentation is not marked Done yet.\n\n"}Send the certificate and a congratulations email to ${b.dataset.n}?`);
     }));
     box.querySelectorAll("[data-reset]").forEach(b => b.addEventListener("click", () => {
       if (!confirm(`Reset the password of ${b.dataset.n}? You'll get a temporary password to give them.`)) return;
@@ -638,8 +700,8 @@
         if (profile.token) {
           // refresh the account from the server at most every 6 hours (saves database requests); always when a group may be needed
           const p = findProject(projects, profile.batch);
-          const stale = !profile.meAt || Date.now() - profile.meAt > 6 * 3600e3 || (!profile.group && groupRequired(p));
-          if (!stale && profile.name) return afterAuth(projects);
+          const stale = !profile.meAt || Date.now() - profile.meAt > 6 * 3600e3 || (!profile.group && groupRequired(p)) || (!profile.cert && Date.now() - profile.meAt > 20 * 60e3);
+          if (!stale && profile.name) { setTimeout(congrats, 1200); return afterAuth(projects); }
           refreshMe(projects).then(r => { if (r === "relogin") authModal(projects, "login", done, { note: "Please log in again.", login: profile.email || "" }); else afterAuth(projects); });
         } else if (profile.name && profile.uid) authModal(projects, "login", done, { note: "Log in with the mobile number you used before. No new account needed.", login: profile.mobile || "" });
         else if (ls.get(KEY + "_was_student") === "1") authModal(projects, "login", done);
